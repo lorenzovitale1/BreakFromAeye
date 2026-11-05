@@ -1,0 +1,24 @@
+# ambiente e cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# dati locali / segreti
+calibration*.json
+config.json
+config.local.json
+*.log
+eyegaze.ico
+logs/
+.env
+# registrazioni / immagini webcam (mai salvate di default)
+*.mp4
+*.avi
+*.png
+*.jpg
+recordings/
+# strumenti scaricati dal setup
+tools/platform-tools/
+tools/*.zip
+*.task

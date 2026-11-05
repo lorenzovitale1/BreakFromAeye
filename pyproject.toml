@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "videodistractionai"
+version = "1.0.0"
+description = "Controlla play/pausa di un video (tablet Android via ADB e/o player sul PC) con lo sguardo, usando solo la webcam."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT" }
+keywords = ["eye-tracking", "gaze", "webcam", "mediapipe", "adb", "android", "media-control"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: Microsoft :: Windows",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Multimedia :: Video",
+]
+dependencies = [
+  "mediapipe>=0.10.14,<2",
+  "opencv-contrib-python>=4.8",
+  "numpy>=1.26",
+  "pystray>=0.19",
+  "pillow>=10",
+  "winrt-runtime>=2; sys_platform == 'win32'",
+  "winrt-Windows.Foundation>=3; sys_platform == 'win32'",
+  "winrt-Windows.Foundation.Collections>=3; sys_platform == 'win32'",
+  "winrt-Windows.Media.Control>=3; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.urls]
+Homepage = "https://github.com/lorenzovitale1/VideoDistractionAI"
+Issues = "https://github.com/lorenzovitale1/VideoDistractionAI/issues"
+
+[project.scripts]
+eyegaze = "eyegaze.__main__:main"
+
+[project.gui-scripts]
+eyegaze-gui = "eyegaze.__main__:main"
+
+[tool.setuptools]
+packages = ["eyegaze"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

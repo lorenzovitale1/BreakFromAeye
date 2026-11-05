@@ -1,0 +1,11 @@
+# Verificato su Windows 10, Python 3.12.3 (mediapipe supporta 3.9-3.12)
+mediapipe==1.2.2
+opencv-contrib-python==5.0.0.93
+numpy==2.5.4
+# Controllo YouTube/browser sul PC (play/pausa espliciti via Windows Media Session)
+winrt-runtime==4.1.0
+winrt-Windows.Foundation==4!10.0.28000.2957
+winrt-Windows.Foundation.Collections==4!10.0.28000.2957
+winrt-Windows.Media.Control==4!10.0.28000.2957
+pystray==0.19.5
+pillow==13.0.0
