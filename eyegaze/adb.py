@@ -80,7 +80,7 @@ class AdbClient:
 
     def _exec(self, *args: str, timeout: Optional[float] = None, secret: bool = False) -> str:
         if not self.adb and not self.locate():
-            raise AdbError("adb non trovato: esegui setup.bat (o «eyegaze --setup») oppure indica il percorso in Impostazioni.")
+            raise AdbError("adb non trovato: esegui setup.bat (o «breakfromaeye --setup») oppure indica il percorso in Impostazioni.")
         try:
             cp = self._run([self.adb, *args], timeout=timeout or self.timeout)
         except subprocess.TimeoutExpired:

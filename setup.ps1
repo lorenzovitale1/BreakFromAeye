@@ -1,4 +1,4 @@
-# Setup Eye Gaze -> Play/Pausa (Windows 10/11). Esegui con doppio clic su setup.bat oppure:  powershell -ExecutionPolicy Bypass -File setup.ps1
+# Setup BreakFromAeye (Windows 10/11). Esegui con doppio clic su setup.bat oppure:  powershell -ExecutionPolicy Bypass -File setup.ps1
 # Nota: file volutamente solo ASCII (compatibile con Windows PowerShell 5.1).
 $ErrorActionPreference = 'Stop'
 Set-Location -Path $PSScriptRoot
@@ -56,10 +56,10 @@ else {
 }
 
 Write-Host "== 5/5  Collegamento sul Desktop ==" -ForegroundColor Cyan
-if (Ask "Creare il collegamento 'Eye Gaze' sul Desktop (si avvia senza finestra nera)?") {
+if (Ask "Creare il collegamento 'BreakFromAeye' sul Desktop (si avvia senza finestra nera)?") {
     & .venv\Scripts\python.exe -c "from eyegaze.tray import make_icon; make_icon('#3fb950', 256).save('eyegaze.ico', sizes=[(256,256),(64,64),(32,32),(16,16)])"
     $ws = New-Object -ComObject WScript.Shell
-    $lnk = $ws.CreateShortcut([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'Eye Gaze.lnk'))
+    $lnk = $ws.CreateShortcut([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'BreakFromAeye.lnk'))
     $lnk.TargetPath = (Resolve-Path ".venv\Scripts\pythonw.exe").Path
     $lnk.Arguments = '-m eyegaze'
     $lnk.WorkingDirectory = $PSScriptRoot

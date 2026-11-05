@@ -47,7 +47,7 @@ class Tray:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Esci", lambda icon, item: h["quit"]()))
         try:
-            self.icon = pystray.Icon("eyegaze", make_icon(self._color), "Eye Gaze → Play/Pausa", menu)
+            self.icon = pystray.Icon("eyegaze", make_icon(self._color), "BreakFromAeye", menu)
             self.icon.run_detached()
         except Exception:
             self.icon = None
@@ -69,7 +69,7 @@ class Tray:
         except Exception:
             pass
 
-    def notify(self, message: str, title: str = "Eye Gaze") -> None:
+    def notify(self, message: str, title: str = "BreakFromAeye") -> None:
         if self.icon is not None:
             try:
                 self.icon.notify(message, title)

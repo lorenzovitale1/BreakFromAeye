@@ -1,4 +1,6 @@
-# VideoDistractionAI — gaze-controlled play/pause
+# BreakFromAeye 👁
+
+> *A break from AI + eye.* Look away from your PC and your video starts.
 
 Watching a video on your **Android tablet** while working at your **PC**? This tool uses **only your PC webcam** to detect whether you are
 looking at the screen and pauses/plays the video accordingly. Everything runs locally: no eye tracker, no cloud.
@@ -22,7 +24,7 @@ cd VideoDistractionAI
 setup.bat            # venv + dependencies; asks before downloading the model (~4 MB) and adb (~8 MB)
 ```
 Then start it from the desktop shortcut created by `setup.bat`, or `start.vbs` (no console window).
-Or with pip: `pipx install git+https://github.com/lorenzovitale1/VideoDistractionAI.git`, then `eyegaze --setup` and `eyegaze-gui`.
+Or with pip: `pipx install git+https://github.com/lorenzovitale1/VideoDistractionAI.git`, then `breakfromaeye --setup` and `breakfromaeye-gui`.
 
 ## Tablet setup (Android 11+)
 Developer options → **Wireless debugging** (tap the *label*, not the switch) → *Pair device with pairing code*. In the app: **Abbina…** (pair, using the pairing IP:port and

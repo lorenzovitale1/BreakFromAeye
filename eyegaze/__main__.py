@@ -11,7 +11,7 @@ from . import __version__, config as cfgmod
 
 
 def parse_args(argv=None):
-    p = argparse.ArgumentParser(prog="eyegaze", description="Eye gaze -> Play/Pausa su tablet Android e/o video sul PC.")
+    p = argparse.ArgumentParser(prog="breakfromaeye", description="BreakFromAeye: se distogli lo sguardo dal PC parte il video (tablet Android e/o PC).")
     p.add_argument("--config", type=str, default=str(cfgmod.CONFIG_PATH), help="percorso di config.json")
     p.add_argument("--dry-run", action="store_true", help="mostra i comandi previsti senza inviarli")
     p.add_argument("--headless", action="store_true", help="senza finestra (stampa lo stato nel terminale)")
@@ -29,7 +29,7 @@ def cmd_list_devices(cfg) -> int:
     from .adb import AdbClient, AdbError
     c = AdbClient(cfg["outputs"]["tablet"]["adb_path"])
     if not c.locate():
-        print("adb non trovato. Esegui setup.bat (o «eyegaze --setup») oppure indica il percorso in config.json (outputs.tablet.adb_path).")
+        print("adb non trovato. Esegui setup.bat (o «breakfromaeye --setup») oppure indica il percorso in config.json (outputs.tablet.adb_path).")
         return 1
     try:
         devs = c.devices()
@@ -94,7 +94,7 @@ def cmd_gui(cfg, calibrate: bool, session_dry_run: bool = False, minimized: bool
     from . import single
     show_cb: dict = {"fn": None}
     if not single.acquire(lambda: show_cb["fn"] and show_cb["fn"]()):
-        print("Eye Gaze è già in esecuzione: ho riaperto la finestra esistente.")
+        print("BreakFromAeye è già in esecuzione: ho riaperto la finestra esistente.")
         return 0
     from .engine import Engine
     from .gui import App
@@ -130,7 +130,7 @@ def _fatal(exc: BaseException) -> None:
         from tkinter import messagebox
         r = tk.Tk()
         r.withdraw()
-        messagebox.showerror("Eye Gaze", f"Errore imprevisto:\n{type(exc).__name__}: {exc}\n\nDettagli in eyegaze.log")
+        messagebox.showerror("BreakFromAeye", f"Errore imprevisto:\n{type(exc).__name__}: {exc}\n\nDettagli in eyegaze.log")
         r.destroy()
     except Exception:
         pass

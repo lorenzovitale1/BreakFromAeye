@@ -3,13 +3,13 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "videodistractionai"
+name = "breakfromaeye"
 version = "1.0.0"
-description = "Controlla play/pausa di un video (tablet Android via ADB e/o player sul PC) con lo sguardo, usando solo la webcam."
+description = "A break from your screen: look away from the PC and your video starts (Android tablet via ADB and/or PC player). Webcam only."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
-keywords = ["eye-tracking", "gaze", "webcam", "mediapipe", "adb", "android", "media-control"]
+keywords = ["breakfromaeye", "eye-tracking", "gaze", "webcam", "mediapipe", "adb", "android", "media-control"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: Microsoft :: Windows",
@@ -36,10 +36,10 @@ Homepage = "https://github.com/lorenzovitale1/VideoDistractionAI"
 Issues = "https://github.com/lorenzovitale1/VideoDistractionAI/issues"
 
 [project.scripts]
-eyegaze = "eyegaze.__main__:main"
+breakfromaeye = "eyegaze.__main__:main"
 
 [project.gui-scripts]
-eyegaze-gui = "eyegaze.__main__:main"
+breakfromaeye-gui = "eyegaze.__main__:main"
 
 [tool.setuptools]
 packages = ["eyegaze"]

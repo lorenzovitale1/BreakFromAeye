@@ -1,4 +1,6 @@
-# VideoDistractionAI — Play/Pausa con lo sguardo
+# BreakFromAeye 👁
+
+> *A break from AI + eye.* Distogli lo sguardo dal PC e il tuo video parte.
 
 [![tests](https://github.com/lorenzovitale1/VideoDistractionAI/actions/workflows/tests.yml/badge.svg)](https://github.com/lorenzovitale1/VideoDistractionAI/actions/workflows/tests.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -32,7 +34,7 @@ Servono: Windows 10/11, una webcam, **Python 3.10–3.12** ([python.org](https:/
 **A) Più semplice — scarica lo ZIP**
 1. Sulla pagina del repository: **Code → Download ZIP**, estrai la cartella dove vuoi.
 2. Doppio clic su **`setup.bat`** e rispondi alle domande (modello di rilevamento ~4 MB, `adb` ~8 MB solo se usi il tablet, collegamento sul Desktop).
-3. Avvia dal collegamento **Eye Gaze** sul Desktop (oppure `start.vbs`).
+3. Avvia dal collegamento **BreakFromAeye** sul Desktop (oppure `start.vbs`).
 
 **B) Con git**
 ```bash
@@ -41,11 +43,11 @@ cd VideoDistractionAI
 setup.bat
 ```
 
-**C) Con pip / pipx** (i dati personali finiscono in `%APPDATA%\VideoDistractionAI`)
+**C) Con pip / pipx** (i dati personali finiscono in `%APPDATA%\BreakFromAeye`)
 ```bash
 pipx install git+https://github.com/lorenzovitale1/VideoDistractionAI.git
-eyegaze --setup      # scarica modello e adb, chiedendo conferma
-eyegaze-gui          # avvia senza finestra di comando
+breakfromaeye --setup      # scarica modello e adb, chiedendo conferma
+breakfromaeye-gui          # avvia senza finestra di comando
 ```
 Tutti i download sono facoltativi e chiesti prima; il modello è verificato con SHA-256.
 
@@ -105,7 +107,7 @@ macchina a stati con durate minime → un comando per transizione. Elaborazione 
 | Problema | Cosa fare |
 |---|---|
 | Non succede niente (compare **DRY-RUN**) | disattiva *Prova a vuoto* o avvia senza `--dry-run` |
-| "Modello mancante" | riapri l'app e accetta il download, o `eyegaze --setup` |
+| "Modello mancante" | riapri l'app e accetta il download, o `breakfromaeye --setup` |
 | Tablet "Scollegato" | stessa rete Wi-Fi; riabbina; il Debug wireless si può spegnere al cambio rete |
 | Scatta guardando i bordi / non scatta altrove | regola *Margine schermo*; ricalibra; controlla la mappa |
 | "Webcam non disponibile" | chiudi le app che la usano; prova un altro *Indice webcam*; `--check-camera` |

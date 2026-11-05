@@ -12,7 +12,7 @@ from tkinter import messagebox, ttk
 from typing import Any, Callable, Optional
 
 from . import config as cfgmod
-from . import assets
+from . import APP_NAME, assets
 from .adb import AdbError
 from .calib_ui import CalibrationWindow
 from .engine import Engine
@@ -84,7 +84,7 @@ class App:
         self.session_dry_run = session_dry_run   # --dry-run da riga di comando: vale solo per questa esecuzione, non va su config.json
         self.log_q = log_queue
         self.root = tk.Tk()
-        self.root.title("Eye Gaze → Play/Pausa")
+        self.root.title(APP_NAME)
         self.root.geometry("900x800")
         self.root.minsize(860, 700)
         setup_style(self.root)
@@ -114,7 +114,7 @@ class App:
     def _build(self) -> None:
         top = ttk.Frame(self.root, padding=(18, 14, 18, 6))
         top.pack(fill="x")
-        ttk.Label(top, text="👁  Eye Gaze → Play/Pausa", style="H1.TLabel").pack(side="left")
+        ttk.Label(top, text=f"👁  {APP_NAME}", style="H1.TLabel").pack(side="left")
         self.pill = tk.Label(top, text="", bg=C["bg"], fg=C["warn"], font=(F, 9, "bold"))
         self.pill.pack(side="left", padx=12)
         ttk.Button(top, text="Esci", style="Danger.TButton", command=self.quit).pack(side="right")
