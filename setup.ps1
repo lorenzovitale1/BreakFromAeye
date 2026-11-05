@@ -57,13 +57,12 @@ else {
 
 Write-Host "== 5/5  Collegamento sul Desktop ==" -ForegroundColor Cyan
 if (Ask "Creare il collegamento 'BreakFromAeye' sul Desktop (si avvia senza finestra nera)?") {
-    & .venv\Scripts\python.exe -c "from eyegaze.tray import make_icon; make_icon('#3fb950', 256).save('eyegaze.ico', sizes=[(256,256),(64,64),(32,32),(16,16)])"
     $ws = New-Object -ComObject WScript.Shell
     $lnk = $ws.CreateShortcut([IO.Path]::Combine([Environment]::GetFolderPath('Desktop'), 'BreakFromAeye.lnk'))
     $lnk.TargetPath = (Resolve-Path ".venv\Scripts\pythonw.exe").Path
     $lnk.Arguments = '-m eyegaze'
     $lnk.WorkingDirectory = $PSScriptRoot
-    if (Test-Path "eyegaze.ico") { $lnk.IconLocation = (Resolve-Path "eyegaze.ico").Path }
+    if (Test-Path "assets\icon.ico") { $lnk.IconLocation = (Resolve-Path "assets\icon.ico").Path }
     $lnk.Save()
     Write-Host "Collegamento creato sul Desktop."
 }

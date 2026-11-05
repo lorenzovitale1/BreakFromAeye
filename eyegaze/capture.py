@@ -8,7 +8,7 @@ from typing import Optional
 
 import numpy as np
 
-from .config import MODEL_PATH
+from .config import find_model
 from .features import FaceFeatures, extract_features
 
 
@@ -27,7 +27,8 @@ class ModelMissing(RuntimeError):
 class FaceDetector:
     """MediaPipe Face Landmarker (Tasks API): 478 landmark con iridi, blendshape, matrice di posa."""
 
-    def __init__(self, model_path=MODEL_PATH):
+    def __init__(self, model_path=None):
+        model_path = model_path or find_model()
         if not model_path.exists():
             raise ModelMissing(f"Modello mancante: {model_path.name}. Riapri l'app e accetta il download, oppure esegui «python -m eyegaze --setup».")
         import mediapipe as mp

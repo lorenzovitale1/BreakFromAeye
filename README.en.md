@@ -17,14 +17,19 @@ Timings and actions are configurable. Tablet and PC outputs can be used separate
 runs in the system tray when the window is closed (configurable) · 9-point calibration · blink/glance filtering · one command per transition · dry-run mode ·
 no command is ever sent when the webcam fails. No frames are stored or sent over the network.
 
-## Install (Windows 10/11, Python 3.10–3.12)
+## Install (Windows 10/11)
+**Recommended:** download `BreakFromAeye-Setup-<version>.exe` from [Releases](https://github.com/lorenzovitale1/BreakFromAeye/releases). It bundles everything
+(no Python needed, includes the face model and adb), installs per-user and shows up in *Apps & features*. Windows SmartScreen may warn because the installer is not
+code-signed: *More info → Run anyway*.
+
+**From source** (Python 3.10–3.12):
 ```bash
-git clone https://github.com/lorenzovitale1/VideoDistractionAI.git
-cd VideoDistractionAI
+git clone https://github.com/lorenzovitale1/BreakFromAeye.git
+cd BreakFromAeye
 setup.bat            # venv + dependencies; asks before downloading the model (~4 MB) and adb (~8 MB)
 ```
 Then start it from the desktop shortcut created by `setup.bat`, or `start.vbs` (no console window).
-Or with pip: `pipx install git+https://github.com/lorenzovitale1/VideoDistractionAI.git`, then `breakfromaeye --setup` and `breakfromaeye-gui`.
+Or with pip: `pipx install git+https://github.com/lorenzovitale1/BreakFromAeye.git`, then `breakfromaeye --setup` and `breakfromaeye-gui`.
 
 ## Tablet setup (Android 11+)
 Developer options → **Wireless debugging** (tap the *label*, not the switch) → *Pair device with pairing code*. In the app: **Abbina…** (pair, using the pairing IP:port and

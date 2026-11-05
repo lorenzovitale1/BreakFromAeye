@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-from .config import ROOT
+from .config import BUNDLE_DIR, ROOT
 
 KEY_PLAY, KEY_PAUSE, KEY_PLAY_PAUSE = 126, 127, 85
 STATE_PLAYING, STATE_PAUSED = 3, 2
@@ -52,6 +52,7 @@ def find_adb(configured: str = "") -> Optional[str]:
         cands.append(Path(configured))
     exe = "adb.exe" if sys.platform == "win32" else "adb"
     cands.append(ROOT / "tools" / "platform-tools" / exe)
+    cands.append(BUNDLE_DIR / "tools" / "platform-tools" / exe)      # incluso nell'installer
     on_path = shutil.which("adb")
     if on_path:
         cands.append(Path(on_path))

@@ -22,3 +22,8 @@ recordings/
 tools/platform-tools/
 tools/*.zip
 *.task
+# build dell'installer
+build/
+dist/
+!assets/*.png
+!assets/*.ico

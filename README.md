@@ -1,8 +1,10 @@
+<p align="center"><img src="assets/icon.png" width="120" alt="BreakFromAeye"></p>
+
 # BreakFromAeye 👁
 
 > *A break from AI + eye.* Distogli lo sguardo dal PC e il tuo video parte.
 
-[![tests](https://github.com/lorenzovitale1/VideoDistractionAI/actions/workflows/tests.yml/badge.svg)](https://github.com/lorenzovitale1/VideoDistractionAI/actions/workflows/tests.yml)
+[![tests](https://github.com/lorenzovitale1/BreakFromAeye/actions/workflows/tests.yml/badge.svg)](https://github.com/lorenzovitale1/BreakFromAeye/actions/workflows/tests.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 
@@ -29,23 +31,31 @@ Tempi e azioni si cambiano dall'interfaccia. Tablet e PC si possono usare **sepa
 
 ## Installazione (Windows 10/11)
 
-Servono: Windows 10/11, una webcam, **Python 3.10–3.12** ([python.org](https://www.python.org/downloads/) o `winget install Python.Python.3.12`).
+**Consigliata — installer** (non serve Python, include tutto: modello di rilevamento e `adb`)
+1. Scarica `BreakFromAeye-Setup-<versione>.exe` dalla pagina [Releases](https://github.com/lorenzovitale1/BreakFromAeye/releases).
+2. Eseguilo: l'installazione è per il tuo utente (nessun permesso di amministratore). Puoi scegliere il collegamento sul Desktop e l'avvio con Windows.
+3. Il programma compare nel menu Start e in *App e funzionalità* (da lì si disinstalla).
 
-**A) Più semplice — scarica lo ZIP**
+> Windows può mostrare *"Windows ha protetto il PC"* perché l'installer non è firmato con un certificato a pagamento:
+> clicca **Maggiori informazioni → Esegui comunque**. Il codice è tutto qui, e l'installer è costruito automaticamente da GitHub Actions.
+
+**Da codice sorgente** — servono Windows 10/11, una webcam, **Python 3.10–3.12** ([python.org](https://www.python.org/downloads/) o `winget install Python.Python.3.12`).
+
+**A) Scarica lo ZIP**
 1. Sulla pagina del repository: **Code → Download ZIP**, estrai la cartella dove vuoi.
 2. Doppio clic su **`setup.bat`** e rispondi alle domande (modello di rilevamento ~4 MB, `adb` ~8 MB solo se usi il tablet, collegamento sul Desktop).
 3. Avvia dal collegamento **BreakFromAeye** sul Desktop (oppure `start.vbs`).
 
 **B) Con git**
 ```bash
-git clone https://github.com/lorenzovitale1/VideoDistractionAI.git
-cd VideoDistractionAI
+git clone https://github.com/lorenzovitale1/BreakFromAeye.git
+cd BreakFromAeye
 setup.bat
 ```
 
 **C) Con pip / pipx** (i dati personali finiscono in `%APPDATA%\BreakFromAeye`)
 ```bash
-pipx install git+https://github.com/lorenzovitale1/VideoDistractionAI.git
+pipx install git+https://github.com/lorenzovitale1/BreakFromAeye.git
 breakfromaeye --setup      # scarica modello e adb, chiedendo conferma
 breakfromaeye-gui          # avvia senza finestra di comando
 ```
@@ -114,6 +124,16 @@ macchina a stati con durate minime → un comando per transizione. Elaborazione 
 | YouTube non reagisce | avvia il video nel browser; *Filtro applicazione*; Test PLAY/PAUSA |
 | La finestra non c'è più | è nell'area di notifica (freccia ^): clic sull'icona. Rilanciare il programma la riapre |
 | Errori all'avvio | `start-debug.bat` (con console) e il file `eyegaze.log` |
+
+## Creare l'installer
+```bash
+pip install -e ".[dev]" pyinstaller
+python -m eyegaze --setup          # scarica modello e adb (vengono inclusi nell'installer)
+python -m PyInstaller --noconfirm --clean packaging/breakfromaeye.spec
+ISCC.exe /DAppVersion=1.0.0 packaging\installer.iss   # Inno Setup 6 → dist\BreakFromAeye-Setup-1.0.0.exe
+```
+Su GitHub lo fa il workflow `release`: pubblicando un tag (`git tag v1.0.0 && git push origin v1.0.0`) l'installer viene allegato alla Release.
+L'icona (`assets/`) è disegnata in codice: `python packaging/make_icon.py` la rigenera.
 
 ## Sviluppo
 ```bash

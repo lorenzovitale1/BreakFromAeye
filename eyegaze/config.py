@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,9 @@ from typing import Any
 PKG_ROOT = Path(__file__).resolve().parent.parent
 # Modalità "portatile": eseguito dalla cartella del progetto (git clone / ZIP / pip install -e): dati accanto al codice.
 # Modalità "installata" (pip install): dati personali in %APPDATA%\BreakFromAeye, mai dentro site-packages.
-PORTABLE = (PKG_ROOT / "setup.ps1").exists() or (PKG_ROOT / ".git").exists()
+FROZEN = bool(getattr(sys, "frozen", False))                      # eseguibile creato con PyInstaller (installer)
+BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", PKG_ROOT))            # file inclusi nell'installer (modello, adb)
+PORTABLE = not FROZEN and ((PKG_ROOT / "setup.ps1").exists() or (PKG_ROOT / ".git").exists())
 ROOT = PKG_ROOT if PORTABLE else Path(os.environ.get("APPDATA") or Path.home()) / "BreakFromAeye"
 if not PORTABLE:
     ROOT.mkdir(parents=True, exist_ok=True)
@@ -31,6 +34,12 @@ def calibration_path(setting) -> Path:
     """Una calibrazione per ogni area (tutti i monitor / singolo monitor): si puo cambiare area senza ricalibrare."""
     return ROOT / f"calibration_{calibration_key(setting)}.json"
 MODEL_PATH = ROOT / "models" / "face_landmarker.task"
+
+
+def find_model() -> Path:
+    """Modello di rilevamento: quello scaricato dall'utente, altrimenti quello incluso nell'installer."""
+    bundled = BUNDLE_DIR / "models" / MODEL_PATH.name
+    return MODEL_PATH if MODEL_PATH.exists() or not bundled.exists() else bundled
 
 DEFAULTS: dict[str, Any] = {
     "timing": {

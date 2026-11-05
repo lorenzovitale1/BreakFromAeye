@@ -393,7 +393,7 @@ class App:
         """All'avvio: modello mancante -> proponi il download; poi, se serve, la prima calibrazione."""
         if not self.visible:
             return
-        if not cfgmod.MODEL_PATH.exists():
+        if not cfgmod.find_model().exists():
             self._offer_model_download(then=self._offer_first_calibration)
         else:
             self._offer_first_calibration()

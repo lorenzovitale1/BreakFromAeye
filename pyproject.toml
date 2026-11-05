@@ -32,8 +32,8 @@ dependencies = [
 dev = ["pytest>=8"]
 
 [project.urls]
-Homepage = "https://github.com/lorenzovitale1/VideoDistractionAI"
-Issues = "https://github.com/lorenzovitale1/VideoDistractionAI/issues"
+Homepage = "https://github.com/lorenzovitale1/BreakFromAeye"
+Issues = "https://github.com/lorenzovitale1/BreakFromAeye/issues"
 
 [project.scripts]
 breakfromaeye = "eyegaze.__main__:main"

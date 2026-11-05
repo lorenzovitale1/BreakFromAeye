@@ -5,20 +5,15 @@ from typing import Callable
 
 try:
     import pystray
-    from PIL import Image, ImageDraw
+    from .icon import draw_icon
     AVAILABLE = True
 except Exception:          # librerie mancanti: l'app funziona, ma senza icona (la X chiude il programma)
     AVAILABLE = False
 
 
 def make_icon(color: str, size: int = 64):
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    d.ellipse((2, 2, size - 2, size - 2), fill="#0f141b", outline=color, width=4)
-    d.ellipse((13, 21, size - 13, size - 21), fill="white")
-    c, r = size / 2, 9
-    d.ellipse((c - r, c - r, c + r, c + r), fill=color)
-    return img
+    """Icona dell'app con l'iride colorata secondo lo stato (verde = guardi il PC, giallo = altrove, grigio = incerto)."""
+    return draw_icon(size, color)
 
 
 class Tray:

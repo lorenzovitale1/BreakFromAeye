@@ -1,0 +1,52 @@
+name: release
+
+# Crea l'installer di Windows. Si avvia pubblicando un tag (es. `git tag v1.0.0 && git push origin v1.0.0`)
+# oppure a mano da Actions > release > Run workflow. Con un tag, l'installer viene allegato alla Release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]" pyinstaller
+      - name: Test
+        run: python -m pytest -q
+      - name: Fetch face model (SHA-256 verified) and Android platform-tools
+        run: python -c "from eyegaze.assets import ensure_model, install_adb; ensure_model(); install_adb()"
+      - name: Build executable
+        run: python -m PyInstaller --noconfirm --clean packaging/breakfromaeye.spec
+      - name: Self-test the built executable
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\BreakFromAeye\BreakFromAeye.exe" -ArgumentList "--selftest" -Wait -PassThru
+          Get-Content "$env:APPDATA\BreakFromAeye\eyegaze.log"
+          if ($p.ExitCode -ne 0) { throw "selftest failed" }
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $v = python -c "import eyegaze; print(eyegaze.__version__)"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$v" packaging\installer.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BreakFromAeye-Setup
+          path: dist/BreakFromAeye-Setup-*.exe
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/BreakFromAeye-Setup-*.exe
+          generate_release_notes: true

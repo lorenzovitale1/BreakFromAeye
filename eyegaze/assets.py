@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable, Optional
 
-from .config import MODEL_PATH, ROOT
+from .config import MODEL_PATH, ROOT, find_model
 
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 MODEL_SHA256 = "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
@@ -42,8 +42,8 @@ def download(url: str, dest: Path, sha256: Optional[str] = None, timeout: float 
 
 
 def ensure_model() -> Path:
-    if MODEL_PATH.exists():
-        return MODEL_PATH
+    if find_model().exists():
+        return find_model()
     return download(MODEL_URL, MODEL_PATH, MODEL_SHA256)
 
 
@@ -77,7 +77,7 @@ def install_adb() -> Path:
 def cli_setup(ask: Callable[[str], bool] = lambda q: input(q + " [s/N] ").strip().lower() in ("s", "si", "y", "yes")) -> int:
     """`python -m eyegaze --setup`: scarica i file mancanti chiedendo conferma per ciascuno."""
     rc = 0
-    if MODEL_PATH.exists():
+    if find_model().exists():
         print("Modello di rilevamento: già presente.")
     elif ask("Scaricare il modello MediaPipe face_landmarker.task (~4 MB, storage.googleapis.com)?"):
         try:

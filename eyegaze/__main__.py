@@ -19,6 +19,7 @@ def parse_args(argv=None):
     p.add_argument("--list-devices", action="store_true", help="elenca i dispositivi ADB e termina")
     p.add_argument("--check-camera", action="store_true", help="prova la webcam (nessun fotogramma salvato) e termina")
     p.add_argument("--calibrate", action="store_true", help="avvia subito la calibrazione")
+    p.add_argument("--selftest", action="store_true", help="controlla che le librerie, il modello e adb siano utilizzabili")
     p.add_argument("--setup", action="store_true", help="scarica i file mancanti (modello, adb) chiedendo conferma")
     p.add_argument("--minimized", action="store_true", help="parte nascosto nell'area di notifica")
     p.add_argument("--version", action="version", version=__version__)
@@ -88,6 +89,52 @@ def cmd_headless(cfg) -> int:
     return 0
 
 
+def cmd_selftest() -> int:
+    """Verifica dell'installazione (usata anche per provare l'eseguibile creato da PyInstaller)."""
+    results: list[tuple[str, bool, str]] = []
+
+    def check(name, fn):
+        try:
+            results.append((name, True, str(fn() or "")))
+        except Exception as exc:
+            results.append((name, False, f"{type(exc).__name__}: {exc}"))
+
+    def detector():
+        import numpy as np
+        from .capture import FaceDetector
+        d = FaceDetector()
+        r = d.detect(np.zeros((480, 640, 3), np.uint8))
+        d.close()
+        return f"modello caricato; frame vuoto -> {r}"
+
+    def media_session():
+        from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionManager  # noqa: F401
+        return "ok"
+
+    def tray():
+        from . import tray as t
+        assert t.AVAILABLE, "pystray/Pillow non disponibili"
+        return "ok"
+
+    def tk():
+        import tkinter, tkinter.ttk  # noqa: F401,E401
+        return "ok"
+
+    def adb():
+        from .adb import find_adb
+        p = find_adb()
+        assert p, "adb non trovato"
+        return p
+
+    for name, fn in (("rilevatore MediaPipe", detector), ("controlli multimediali Windows", media_session),
+                     ("icona area di notifica", tray), ("Tkinter", tk), ("adb", adb)):
+        check(name, fn)
+    print(f"BreakFromAeye {__version__} · dati in {cfgmod.ROOT}")
+    for name, ok, info in results:
+        print(f"[{'OK' if ok else 'ERRORE'}] {name}: {info}")
+    return 0 if all(ok for _, ok, _ in results) else 1
+
+
 def cmd_gui(cfg, calibrate: bool, session_dry_run: bool = False, minimized: bool = False) -> int:
     from .monitors import set_dpi_aware
     set_dpi_aware()
@@ -143,6 +190,8 @@ def main(argv=None) -> int:
     cfg = cfgmod.load(Path(a.config))
     if a.dry_run:
         cfg["dry_run"] = True
+    if a.selftest:
+        return cmd_selftest()
     if a.setup:
         from .assets import cli_setup
         return cli_setup()
