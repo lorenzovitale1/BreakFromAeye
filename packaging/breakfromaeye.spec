@@ -12,7 +12,7 @@ d, b, h = collect_all("mediapipe")
 datas += d
 binaries += b
 hiddenimports += h
-hiddenimports += collect_submodules("winrt") + ["pystray._win32"]
+hiddenimports += collect_submodules("winrt") + collect_submodules("qrcode") + ["pystray._win32"]
 
 model = ROOT / "models" / "face_landmarker.task"
 adb_dir = ROOT / "tools" / "platform-tools"

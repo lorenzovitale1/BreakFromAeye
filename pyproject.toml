@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "breakfromaeye"
-version = "1.0.0"
+version = "1.1.0"
 description = "A break from your screen: look away from the PC and your video starts (Android tablet via ADB and/or PC player). Webcam only."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
@@ -22,6 +22,7 @@ dependencies = [
   "numpy>=1.26",
   "pystray>=0.19",
   "pillow>=10",
+  "qrcode>=7.4",
   "winrt-runtime>=2; sys_platform == 'win32'",
   "winrt-Windows.Foundation>=3; sys_platform == 'win32'",
   "winrt-Windows.Foundation.Collections>=3; sys_platform == 'win32'",

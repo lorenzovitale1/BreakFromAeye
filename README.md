@@ -69,9 +69,14 @@ Tutti i download sono facoltativi e chiesti prima; il modello è verificato con 
 
 ## Tablet Android (ADB via Wi-Fi)
 Sul tablet (Android 11+): *Impostazioni → Opzioni sviluppatore → **Debug wireless***, con tablet e PC sulla **stessa rete fidata**.
-1. Tocca **la scritta** "Debug wireless" (non l'interruttore) per aprire la pagina con *Abbina dispositivo con codice di associazione* e *Indirizzo IP e porta*.
-2. Nell'app: **Abbina…** → IP:porta di *abbinamento* + codice a 6 cifre. Poi **Connetti IP…** → IP:porta della pagina principale (la porta è diversa).
+1. Tocca **la scritta** "Debug wireless" (non l'interruttore) per aprire la pagina di abbinamento.
+2. **Abbinamento — metodo più rapido, con QR**: nell'app premi **📷 Abbina con codice QR…**; sul tablet scegli *Abbina dispositivo con codice QR* e inquadra il codice mostrato sul PC.
+   Il programma trova il tablet in rete, completa l'abbinamento e lo collega da solo.
+   *Alternativa, con il codice a 6 cifre:* **Abbina…** → IP:porta di *abbinamento* + codice, poi **Connetti IP…** → IP:porta della pagina principale (la porta è diversa).
 3. **Aggiorna**, scegli il tablet nella lista, poi **Test PLAY / Test PAUSA** con un video già aperto sul tablet.
+
+Il QR contiene un nome e una password casuali, validi solo per quella sessione (2 minuti). Se l'abbinamento non parte, controlla che PC e tablet siano sulla
+stessa rete Wi-Fi (le reti "ospiti" spesso bloccano la ricerca in rete) e ripiega sul codice a 6 cifre.
 
 Comandi distinti e idempotenti (`keyevent 126` = PLAY, `127` = PAUSA), non un toggle. Alcune app **ignorano** i tasti multimediali: in quel caso
 imposta *Metodo* su `toggle_if_needed` (legge lo stato del player con `dumpsys media_session`). Non vengono aggirati DRM o protezioni.

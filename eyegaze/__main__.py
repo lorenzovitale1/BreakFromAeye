@@ -120,6 +120,10 @@ def cmd_selftest() -> int:
         import tkinter, tkinter.ttk  # noqa: F401,E401
         return "ok"
 
+    def qr():
+        from .qrpair import qr_image
+        return f"QR {qr_image('WIFI:T:ADB;S:x;P:y;;').size[0]} px"
+
     def adb():
         from .adb import find_adb
         p = find_adb()
@@ -127,7 +131,7 @@ def cmd_selftest() -> int:
         return p
 
     for name, fn in (("rilevatore MediaPipe", detector), ("controlli multimediali Windows", media_session),
-                     ("icona area di notifica", tray), ("Tkinter", tk), ("adb", adb)):
+                     ("icona area di notifica", tray), ("Tkinter", tk), ("codice QR", qr), ("adb", adb)):
         check(name, fn)
     print(f"BreakFromAeye {__version__} · dati in {cfgmod.ROOT}")
     for name, ok, info in results:

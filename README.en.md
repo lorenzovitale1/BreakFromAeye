@@ -32,8 +32,10 @@ Then start it from the desktop shortcut created by `setup.bat`, or `start.vbs` (
 Or with pip: `pipx install git+https://github.com/lorenzovitale1/BreakFromAeye.git`, then `breakfromaeye --setup` and `breakfromaeye-gui`.
 
 ## Tablet setup (Android 11+)
-Developer options → **Wireless debugging** (tap the *label*, not the switch) → *Pair device with pairing code*. In the app: **Abbina…** (pair, using the pairing IP:port and
-code) → **Connetti IP…** (connect, using the IP:port shown on the main Wireless debugging page) → pick the device → *Test PLAY / PAUSA*.
+Developer options → **Wireless debugging** (tap the *label*, not the switch). Fastest: in the app press **📷 Abbina con codice QR…** and, on the tablet, choose
+*Pair device with QR code* and scan the code shown on the PC — the app finds the tablet, pairs and connects automatically (random name/password, valid for 2 minutes;
+PC and tablet must be on the same Wi-Fi). Alternative with the 6-digit code: **Abbina…** (pairing IP:port + code) → **Connetti IP…** (IP:port from the main Wireless debugging page).
+Then pick the device → *Test PLAY / PAUSA*.
 Some Android apps ignore media keys; switch *Metodo* to `toggle_if_needed` in that case. DRM/protections are not bypassed.
 
 ## Development

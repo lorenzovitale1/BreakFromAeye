@@ -18,6 +18,7 @@ from .calib_ui import CalibrationWindow
 from .engine import Engine
 from .calibration import keyboard_preset
 from .monitors import monitor_options
+from .qr_ui import QrPairDialog
 from .tray import Tray
 from .zone_ui import CornerWizard, ZoneEditDialog
 from .outputs import AdbOutput, CommandResult
@@ -191,6 +192,7 @@ class App:
         ttk.Button(r1, text="Aggiorna", command=self.refresh_devices).pack(side="left")
         ttk.Button(r1, text="Connetti IP…", command=self.connect_dialog).pack(side="left", padx=6)
         ttk.Button(r1, text="Abbina…", command=self.pair_dialog).pack(side="left")
+        ttk.Button(self.tab_card, text="📷 Abbina con codice QR…", style="Accent.TButton", command=self.qr_dialog).pack(fill="x", pady=(8, 0))
         r2 = ttk.Frame(self.tab_card, style="Card.TFrame")
         r2.pack(fill="x", pady=(8, 0))
         ttk.Button(r2, text="▶ Test PLAY", command=lambda: self.test("tablet", "play")).pack(side="left")
@@ -514,6 +516,16 @@ class App:
                                                            (dlg.after(900, dlg.destroy), self.refresh_devices()) if not err else None))
         ttk.Button(dlg, text="OK", style="Accent.TButton", command=go).pack(anchor="e", pady=(8, 0))
         entries[0].focus_set()
+
+    def qr_dialog(self) -> None:
+        out = self._tablet_out()
+        if not out:
+            self.test_lbl.configure(text="Abilita «Controlla il tablet» (scelta in alto) per abbinare il tablet.")
+            return
+        if not out.client.adb and not out.client.locate():
+            self._offer_adb_download()
+            return
+        QrPairDialog(self.root, out.client, self.ui_q.put, on_success=self.refresh_devices)
 
     def connect_dialog(self) -> None:
         out = self._tablet_out()

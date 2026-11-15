@@ -40,6 +40,14 @@ class Device:
         return f"{self.model or 'Android'} ({self.serial})"
 
 
+@dataclass(frozen=True)
+class MdnsService:
+    """Servizio ADB annunciato in rete: abbinamento (`pairing`) o connessione (`connect`)."""
+    name: str
+    kind: str
+    hostport: str
+
+
 def _run_default(args, **kw):
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
     return subprocess.run(args, capture_output=True, text=True, creationflags=flags, **kw)
@@ -74,6 +82,7 @@ class AdbClient:
         self._run = runner
         self.timeout = timeout
         self.adb: Optional[str] = None
+        self.env_extra: dict[str, str] = {}
 
     def locate(self) -> Optional[str]:
         self.adb = find_adb(self._configured)
@@ -83,7 +92,10 @@ class AdbClient:
         if not self.adb and not self.locate():
             raise AdbError("adb non trovato: esegui setup.bat (o «breakfromaeye --setup») oppure indica il percorso in Impostazioni.")
         try:
-            cp = self._run([self.adb, *args], timeout=timeout or self.timeout)
+            kw: dict = {"timeout": timeout or self.timeout}
+            if self.env_extra:
+                kw["env"] = {**os.environ, **self.env_extra}
+            cp = self._run([self.adb, *args], **kw)
         except subprocess.TimeoutExpired:
             raise AdbError("adb non risponde (timeout).")
         except OSError as exc:
@@ -124,6 +136,31 @@ class AdbClient:
             self._exec("disconnect", *([hostport] if hostport else []))
         except AdbError:
             pass
+
+    # ---- mDNS (abbinamento con QR) ---------------------------------------
+    def mdns_ok(self) -> bool:
+        try:
+            out = self._exec("mdns", "check").lower()
+        except AdbError:
+            return False
+        return "unavailable" not in out and "error" not in out
+
+    def enable_openscreen_mdns(self) -> None:
+        """Alternativa integrata in adb alla ricerca via Bonjour: serve riavviare il server adb."""
+        self.env_extra["ADB_MDNS_OPENSCREEN"] = "1"
+        try:
+            self._exec("kill-server")
+        except AdbError:
+            pass
+
+    def mdns_services(self) -> list[MdnsService]:
+        out = self._exec("mdns", "services", timeout=10)
+        res: list[MdnsService] = []
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[1].startswith("_adb-tls-"):
+                res.append(MdnsService(parts[0], "pairing" if "pairing" in parts[1] else "connect", parts[2]))
+        return res
 
     # ---- comandi ---------------------------------------------------------
     def keyevent(self, serial: str, code: int) -> None:
