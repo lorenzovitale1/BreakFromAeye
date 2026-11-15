@@ -12,8 +12,8 @@ from tkinter import messagebox, ttk
 from typing import Any, Callable, Optional
 
 from . import config as cfgmod
-from . import APP_NAME, assets
-from .adb import AdbError
+from . import APP_NAME, assets, i18n
+from .adb import AdbError, AdbNotFound
 from .calib_ui import CalibrationWindow
 from .engine import Engine
 from .calibration import keyboard_preset
@@ -22,14 +22,15 @@ from .qr_ui import QrPairDialog
 from .tray import Tray
 from .zone_ui import CornerWizard, ZoneEditDialog
 from .outputs import AdbOutput, CommandResult
-from .states import ACTION_LABELS, GazeState
+from .states import GazeState, action_label
+from .i18n import tr
 
 C = dict(bg="#0f141b", card="#161d27", line="#243040", text="#e6edf3", muted="#8b98a8",
          accent="#4c8dff", ok="#3fb950", warn="#f0b429", bad="#f85149", idle="#6e7b8b")
 STATE_COLOR = {GazeState.LOOKING_AT_PC: C["ok"], GazeState.LOOKING_AWAY: C["warn"], GazeState.UNKNOWN: C["idle"]}
 F = "Segoe UI"
 RESTART_PREFIXES = ("camera.", "show_preview")          # le uscite si ricostruiscono da sole, senza toccare la webcam
-ACTION_UI = {"play": "PLAY", "pause": "PAUSA", "none": "nessuna azione"}
+ACTION_UI = {"play": "PLAY", "pause": "PAUSA", "none": "nessuna azione"}     # chiavi di traduzione (vedi _labels_for)
 
 
 def setup_style(root: tk.Tk) -> None:
@@ -100,9 +101,10 @@ class App:
         self._zone_sig = None
         self._zgeom = (0.0, 0.0, 1.0, 1.0)
         post = self.ui_q.put
-        self.tray = Tray({"show": lambda: post(self.show_window), "pause": lambda: post(self.toggle_pause),
-                          "mode": lambda m: post(lambda: self.set_mode(m)), "calibrate": lambda: post(self.calibrate),
-                          "quit": lambda: post(self.quit)}, self.current_mode, lambda: self.engine.paused)
+        self._tray_handlers = {"show": lambda: post(self.show_window), "pause": lambda: post(self.toggle_pause),
+                               "mode": lambda m: post(lambda: self.set_mode(m)), "calibrate": lambda: post(self.calibrate),
+                               "quit": lambda: post(self.quit)}
+        self.tray = Tray(self._tray_handlers, self.current_mode, lambda: self.engine.paused)
         self.tray_ok = self.tray.start()
         self._build()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close_button)
@@ -118,20 +120,20 @@ class App:
         ttk.Label(top, text=f"👁  {APP_NAME}", style="H1.TLabel").pack(side="left")
         self.pill = tk.Label(top, text="", bg=C["bg"], fg=C["warn"], font=(F, 9, "bold"))
         self.pill.pack(side="left", padx=12)
-        ttk.Button(top, text="Esci", style="Danger.TButton", command=self.quit).pack(side="right")
-        ttk.Button(top, text="✕ Chiudi", command=self.on_close_button).pack(side="right", padx=8)
-        ttk.Button(top, text="🎯 Ricalibra", command=self.calibrate).pack(side="right", padx=8)
-        self.pause_btn = ttk.Button(top, text="⏸ Pausa", width=12, command=self.toggle_pause)
+        ttk.Button(top, text=tr("Esci"), style="Danger.TButton", command=self.quit).pack(side="right")
+        ttk.Button(top, text=tr("✕ Chiudi"), command=self.on_close_button).pack(side="right", padx=8)
+        ttk.Button(top, text=tr("🎯 Ricalibra"), command=self.calibrate).pack(side="right", padx=8)
+        self.pause_btn = ttk.Button(top, text=tr("⏸ Pausa"), width=12, command=self.toggle_pause)
         self.pause_btn.pack(side="right")
 
         nb = ttk.Notebook(self.root)
         nb.pack(fill="both", expand=True, padx=14, pady=(4, 14))
         self.tab_state, self.tab_zones = ttk.Frame(nb, padding=8), ttk.Frame(nb, padding=8)
         self.tab_set, self.tab_log = ttk.Frame(nb), ttk.Frame(nb, padding=8)
-        nb.add(self.tab_state, text="Stato")
-        nb.add(self.tab_zones, text="Aree sicure")
-        nb.add(self.tab_set, text="Impostazioni")
-        nb.add(self.tab_log, text="Registro")
+        nb.add(self.tab_state, text=tr("Stato"))
+        nb.add(self.tab_zones, text=tr("Aree sicure"))
+        nb.add(self.tab_set, text=tr("Impostazioni"))
+        nb.add(self.tab_log, text=tr("Registro"))
         self._build_state()
         self._build_zones()
         self._build_settings()
@@ -143,9 +145,9 @@ class App:
         t.columnconfigure(1, weight=1, uniform="c")
         bar = ttk.Frame(t, style="Card.TFrame", padding=(14, 10))
         bar.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
-        ttk.Label(bar, text="Cosa controllare:", style="H2.TLabel").pack(side="left")
+        ttk.Label(bar, text=tr("Cosa controllare:"), style="H2.TLabel").pack(side="left")
         self.mode_var = tk.StringVar(value=self.current_mode())
-        for val, text in (("tablet", "📱 Tablet"), ("pc", "🖥 Video sul PC"), ("both", "📱 + 🖥 Entrambi")):
+        for val, text in (("tablet", tr("📱 Tablet")), ("pc", tr("🖥 Video sul PC")), ("both", tr("📱 + 🖥 Entrambi"))):
             ttk.Radiobutton(bar, text=text, value=val, variable=self.mode_var, style="Mode.Toolbutton",
                             command=lambda: self.set_mode(self.mode_var.get())).pack(side="left", padx=(10, 0))
         left = card(t)
@@ -161,13 +163,13 @@ class App:
         self.prog.pack(pady=(4, 8))
         self.msg_lbl = ttk.Label(left, text="", style="CardMuted.TLabel", wraplength=320, justify="center")
         self.msg_lbl.pack(pady=(0, 6))
-        ttk.Label(left, text="Area da monitorare (schermi)", style="CardMuted.TLabel").pack(pady=(4, 0))
+        ttk.Label(left, text=tr("Area da monitorare (schermi)"), style="CardMuted.TLabel").pack(pady=(4, 0))
         self.area_var = tk.StringVar()
         self.area_cb = ttk.Combobox(left, textvariable=self.area_var, state="readonly", width=36)
         self.area_cb.pack(pady=(2, 6))
         self.area_cb.bind("<<ComboboxSelected>>", self._area_chosen)
         self._sync_area_cb()
-        ttk.Label(left, text="Mappa dello sguardo (rettangolo = schermo)", style="CardMuted.TLabel").pack()
+        ttk.Label(left, text=tr("Mappa dello sguardo (rettangolo = schermo)"), style="CardMuted.TLabel").pack()
         self.map = tk.Canvas(left, width=280, height=170, bg="#0b0e14", highlightthickness=1, highlightbackground=C["line"])
         self.map.pack(pady=4)
         self.preview_lbl = tk.Label(left, bg=C["card"])
@@ -176,7 +178,7 @@ class App:
         right = ttk.Frame(t)
         right.grid(row=1, column=1, sticky="nsew", padx=(6, 0))
         # --- tablet
-        self.tab_card = card(right, "📱 Tablet Android")
+        self.tab_card = card(right, tr("📱 Tablet Android"))
         self.tab_card.pack(fill="x", pady=(0, 12))
         self.tab_status = ttk.Label(self.tab_card, text="", style="Card.TLabel", wraplength=330, justify="left")
         self.tab_status.pack(anchor="w")
@@ -189,16 +191,16 @@ class App:
         self.devices: list = []
         r1 = ttk.Frame(self.tab_card, style="Card.TFrame")
         r1.pack(fill="x", pady=(8, 0))
-        ttk.Button(r1, text="Aggiorna", command=self.refresh_devices).pack(side="left")
-        ttk.Button(r1, text="Connetti IP…", command=self.connect_dialog).pack(side="left", padx=6)
-        ttk.Button(r1, text="Abbina…", command=self.pair_dialog).pack(side="left")
-        ttk.Button(self.tab_card, text="📷 Abbina con codice QR…", style="Accent.TButton", command=self.qr_dialog).pack(fill="x", pady=(8, 0))
+        ttk.Button(r1, text=tr("Aggiorna"), command=self.refresh_devices).pack(side="left")
+        ttk.Button(r1, text=tr("Connetti IP…"), command=self.connect_dialog).pack(side="left", padx=6)
+        ttk.Button(r1, text=tr("Abbina…"), command=self.pair_dialog).pack(side="left")
+        ttk.Button(self.tab_card, text=tr("📷 Abbina con codice QR…"), style="Accent.TButton", command=self.qr_dialog).pack(fill="x", pady=(8, 0))
         r2 = ttk.Frame(self.tab_card, style="Card.TFrame")
         r2.pack(fill="x", pady=(8, 0))
-        ttk.Button(r2, text="▶ Test PLAY", command=lambda: self.test("tablet", "play")).pack(side="left")
-        ttk.Button(r2, text="⏸ Test PAUSA", command=lambda: self.test("tablet", "pause")).pack(side="left", padx=6)
+        ttk.Button(r2, text=tr("▶ Test PLAY"), command=lambda: self.test("tablet", "play")).pack(side="left")
+        ttk.Button(r2, text=tr("⏸ Test PAUSA"), command=lambda: self.test("tablet", "pause")).pack(side="left", padx=6)
         # --- pc
-        self.pc_card = card(right, "🖥  Video sul PC (YouTube…)")
+        self.pc_card = card(right, tr("🖥  Video sul PC (YouTube…)"))
         self.pc_card.pack(fill="x")
         self.pc_status = ttk.Label(self.pc_card, text="", style="Card.TLabel", wraplength=330, justify="left")
         self.pc_status.pack(anchor="w")
@@ -206,8 +208,8 @@ class App:
         self.pc_last.pack(anchor="w", pady=(2, 8))
         r3 = ttk.Frame(self.pc_card, style="Card.TFrame")
         r3.pack(fill="x")
-        ttk.Button(r3, text="▶ Test PLAY", command=lambda: self.test("pc_media", "play")).pack(side="left")
-        ttk.Button(r3, text="⏸ Test PAUSA", command=lambda: self.test("pc_media", "pause")).pack(side="left", padx=6)
+        ttk.Button(r3, text=tr("▶ Test PLAY"), command=lambda: self.test("pc_media", "play")).pack(side="left")
+        ttk.Button(r3, text=tr("⏸ Test PAUSA"), command=lambda: self.test("pc_media", "pause")).pack(side="left", padx=6)
         self.test_lbl = ttk.Label(right, text="", style="Muted.TLabel", wraplength=360, justify="left")
         self.test_lbl.pack(anchor="w", pady=(10, 0))
 
@@ -220,9 +222,9 @@ class App:
         outer = self.tab_set
         bar = ttk.Frame(outer, padding=(8, 8, 8, 4))
         bar.pack(side="bottom", fill="x")
-        ttk.Button(bar, text="Salva e applica", style="Accent.TButton", command=self.save_settings).pack(side="left")
-        ttk.Button(bar, text="Annulla modifiche", command=self.load_settings_into_form).pack(side="left", padx=8)
-        ttk.Button(bar, text="Ripristina predefiniti", command=lambda: self.load_settings_into_form(cfgmod.DEFAULTS)).pack(side="left")
+        ttk.Button(bar, text=tr("Salva e applica"), style="Accent.TButton", command=self.save_settings).pack(side="left")
+        ttk.Button(bar, text=tr("Annulla modifiche"), command=self.load_settings_into_form).pack(side="left", padx=8)
+        ttk.Button(bar, text=tr("Ripristina predefiniti"), command=lambda: self.load_settings_into_form(cfgmod.DEFAULTS)).pack(side="left")
         self.set_msg = ttk.Label(bar, text="", style="Muted.TLabel")
         self.set_msg.pack(side="left", padx=12)
 
@@ -241,7 +243,7 @@ class App:
         for meta in cfgmod.SETTINGS:
             if meta["section"] != section:
                 section = meta["section"]
-                holder = card(body, section)
+                holder = card(body, tr(section))
                 holder.pack(fill="x", padx=8, pady=6)
             self._setting_row(holder, meta)
         self.load_settings_into_form()
@@ -251,8 +253,8 @@ class App:
         row.pack(fill="x", pady=5)
         row.columnconfigure(1, weight=1)
         t = meta["type"]
-        ttk.Label(row, text=meta["label"], style="Card.TLabel", font=(F, 10, "bold")).grid(row=0, column=0, sticky="w")
-        ttk.Label(row, text=meta["help"], style="CardMuted.TLabel", wraplength=560, justify="left").grid(row=1, column=0, columnspan=3, sticky="w")
+        ttk.Label(row, text=tr(meta["label"]), style="Card.TLabel", font=(F, 10, "bold")).grid(row=0, column=0, sticky="w")
+        ttk.Label(row, text=tr(meta["help"]), style="CardMuted.TLabel", wraplength=560, justify="left").grid(row=1, column=0, columnspan=3, sticky="w")
         if t == "float":
             var = tk.DoubleVar()
             vlabel = ttk.Label(row, text="", style="Card.TLabel", width=8, anchor="e")
@@ -276,7 +278,7 @@ class App:
             ttk.Spinbox(row, from_=meta["min"], to=meta["max"], textvariable=var, width=8).grid(row=0, column=2, sticky="e")
         elif t == "bool":
             var = tk.BooleanVar()
-            ttk.Checkbutton(row, variable=var, text="Attivo").grid(row=0, column=2, sticky="e")
+            ttk.Checkbutton(row, variable=var, text=tr("Attivo")).grid(row=0, column=2, sticky="e")
         elif t == "choice":
             var = tk.StringVar()
             ttk.Combobox(row, textvariable=var, values=list(self._labels_for(meta).values()), state="readonly",
@@ -315,6 +317,20 @@ class App:
             cfgmod.set_path(cfg, path, val)
         return cfgmod.validate(cfg)
 
+    def _rebuild_ui(self) -> None:
+        """Cambio lingua: ricrea tutti i widget (e il menu dell'icona) con i nuovi testi."""
+        for w in self.root.winfo_children():
+            w.destroy()
+        self.vars = {}
+        self._zone_sig = None
+        self._photo = None
+        self._build()
+        self._sync_area_cb()
+        self.tray.stop()
+        self.tray = Tray(self._tray_handlers, self.current_mode, lambda: self.engine.paused)
+        self.tray_ok = self.tray.start()
+        self.set_msg.configure(text=tr("Salvato e applicato."))
+
     def save_settings(self) -> None:
         new = self.collect_form()
         old = self.engine.cfg
@@ -322,13 +338,17 @@ class App:
         try:
             self._persist(new)
         except OSError as exc:
-            messagebox.showerror("Salvataggio", f"Impossibile scrivere config.json:\n{exc}")
+            messagebox.showerror(tr("Salvataggio"), tr('Impossibile scrivere config.json:\n{exc}', exc=exc))
             return
         restart = any(p.startswith(RESTART_PREFIXES) for p in changed)
         self.engine.apply_config(new, restart)
-        note = "Salvato e applicato." if changed else "Nessuna modifica."
+        if new["ui"]["language"] != old["ui"]["language"]:
+            i18n.set_language(new["ui"]["language"])
+            self._rebuild_ui()
+            return
+        note = tr("Salvato e applicato.") if changed else tr("Nessuna modifica.")
         if "calibration.monitor" in changed and self.engine.model is None:
-            note += " Area senza calibrazione: premi «Ricalibra»."
+            note += tr(" Area senza calibrazione: premi «Ricalibra».")
         self.set_msg.configure(text=note)
         self.load_settings_into_form()
         self._sync_area_cb()
@@ -337,7 +357,7 @@ class App:
     @staticmethod
     def _monitor_label(value) -> str:
         key = cfgmod.calibration_key(value)
-        return next((lbl for v, lbl in monitor_options() if v == key), "Tutti i monitor" if key == "all" else str(value))
+        return next((lbl for v, lbl in monitor_options() if v == key), tr("Tutti i monitor") if key == "all" else str(value))
 
     @staticmethod
     def _monitor_value(label: str) -> str:
@@ -356,15 +376,15 @@ class App:
         try:
             self._persist(cfg)
         except OSError as exc:
-            messagebox.showerror("Salvataggio", f"Impossibile scrivere config.json:\n{exc}")
+            messagebox.showerror(tr("Salvataggio"), tr('Impossibile scrivere config.json:\n{exc}', exc=exc))
             return
         self.engine.apply_config(cfg, False)
         self.load_settings_into_form()
         if self.engine.model is None:
-            if messagebox.askyesno("Calibrazione", "Per questa area non c'è ancora una calibrazione.\n\nAvviarla ora?"):
+            if messagebox.askyesno(tr("Calibrazione"), tr("Per questa area non c'è ancora una calibrazione.\n\nAvviarla ora?")):
                 self.calibrate()
         else:
-            self.test_lbl.configure(text="Area cambiata: uso la calibrazione già salvata per questa area.")
+            self.test_lbl.configure(text=tr("Area cambiata: uso la calibrazione già salvata per questa area."))
 
     def _persist(self, cfg: dict) -> None:
         out = copy.deepcopy(cfg)
@@ -389,7 +409,7 @@ class App:
         self.test_lbl.configure(text=msg)
         self.log_q.put(msg)
         if not ok:
-            messagebox.showinfo("Calibrazione", msg)
+            messagebox.showinfo(tr("Calibrazione"), msg)
 
     def _startup_checks(self) -> None:
         """All'avvio: modello mancante -> proponi il download; poi, se serve, la prima calibrazione."""
@@ -402,38 +422,38 @@ class App:
 
     def _offer_model_download(self, then: Callable[[], None]) -> None:
         if not messagebox.askyesno(
-                "Modello di rilevamento",
-                "Serve il modello del volto MediaPipe (face_landmarker.task, circa 4 MB, scaricato da storage.googleapis.com — Google).\n"
-                "Si scarica una sola volta; le immagini della webcam restano sempre sul tuo PC.\n\nScaricarlo ora?"):
+                tr("Modello di rilevamento"),
+                tr("Serve il modello del volto MediaPipe (face_landmarker.task, circa 4 MB, scaricato da storage.googleapis.com — Google).\n"
+                "Si scarica una sola volta; le immagini della webcam restano sempre sul tuo PC.\n\nScaricarlo ora?")):
             then()
             return
-        self.test_lbl.configure(text="Download del modello in corso…")
+        self.test_lbl.configure(text=tr("Download del modello in corso…"))
 
         def done(_res, err):
             if err:
-                messagebox.showerror("Download", f"Download non riuscito:\n{err}")
+                messagebox.showerror(tr("Download"), tr('Download non riuscito:\n{err}', err=err))
             else:
-                self.test_lbl.configure(text="Modello scaricato.")
+                self.test_lbl.configure(text=tr("Modello scaricato."))
                 self.engine.restart()
             then()
         self.bg(assets.ensure_model, done)
 
     def _offer_adb_download(self) -> None:
         if not messagebox.askyesno(
-                "adb non trovato",
-                "Per controllare il tablet serve adb (Android platform-tools, circa 8 MB, scaricato da dl.google.com — Google).\n\nScaricarlo ora?"):
+                tr("adb non trovato"),
+                tr("Per controllare il tablet serve adb (Android platform-tools, circa 8 MB, scaricato da dl.google.com — Google).\n\nScaricarlo ora?")):
             return
-        self.test_lbl.configure(text="Download di adb in corso…")
+        self.test_lbl.configure(text=tr("Download di adb in corso…"))
 
         def done(_res, err):
             if err:
-                messagebox.showerror("Download", f"Download non riuscito:\n{err}")
+                messagebox.showerror(tr("Download"), tr('Download non riuscito:\n{err}', err=err))
                 return
             out = self._tablet_out()
             if out:
                 out.client.adb = None                  # forza una nuova ricerca
             self.engine.restart()
-            self.test_lbl.configure(text="adb installato. Ora abbina il tablet con «Abbina…».")
+            self.test_lbl.configure(text=tr("adb installato. Ora abbina il tablet con «Abbina…»."))
         self.bg(assets.install_adb, done)
 
     def _offer_first_calibration(self) -> None:
@@ -441,8 +461,8 @@ class App:
             return
         if not self.visible:
             return
-        if messagebox.askyesno("Prima calibrazione",
-                               "Per riconoscere quando guardi lo schermo serve una breve calibrazione (circa 30 secondi).\n\nAvviarla ora?"):
+        if messagebox.askyesno(tr("Prima calibrazione"),
+                               tr("Per riconoscere quando guardi lo schermo serve una breve calibrazione (circa 30 secondi).\n\nAvviarla ora?")):
             self.calibrate()
 
     def _tablet_out(self) -> Optional[AdbOutput]:
@@ -463,13 +483,13 @@ class App:
     def refresh_devices(self) -> None:
         out = self._tablet_out()
         if not out:
-            self.test_lbl.configure(text="Abilita «Controlla il tablet» nelle Impostazioni.")
+            self.test_lbl.configure(text=tr("Abilita «Controlla il tablet» nelle Impostazioni."))
             return
 
         def done(devs, err):
             if err:
-                self.test_lbl.configure(text=f"ADB: {err}")
-                if "adb non trovato" in str(err):
+                self.test_lbl.configure(text=tr('ADB: {err}', err=err))
+                if isinstance(err, AdbNotFound):
                     self._offer_adb_download()
                 return
             self.devices = devs
@@ -479,7 +499,7 @@ class App:
                 if cur >= 0:
                     self.dev_cb.current(cur)
                     out.select(devs[cur].serial)
-            self.test_lbl.configure(text=f"{len(devs)} dispositivo/i trovato/i." if devs else "Nessun dispositivo: usa «Abbina…» / «Connetti IP…».")
+            self.test_lbl.configure(text=tr('{n} dispositivo/i trovato/i.', n=len(devs)) if devs else tr("Nessun dispositivo: usa «Abbina…» / «Connetti IP…»."))
 
         self.bg(out.client.devices, done)
 
@@ -493,7 +513,7 @@ class App:
                 self._persist(self.engine.cfg)
             except OSError:
                 pass
-            self.test_lbl.configure(text=f"Selezionato: {self.devices[i].label}")
+            self.test_lbl.configure(text=tr('Selezionato: {label}', label=self.devices[i].label))
 
     def _ask(self, title: str, fields: list[tuple[str, bool]], action: Callable[..., str]) -> None:
         dlg = tk.Toplevel(self.root)
@@ -511,7 +531,7 @@ class App:
 
         def go():
             vals = [e.get().strip() for e in entries]
-            info.configure(text="Attendi…")
+            info.configure(text=tr("Attendi…"))
             self.bg(lambda: action(*vals), lambda r, err: (info.configure(text=str(err) if err else r),
                                                            (dlg.after(900, dlg.destroy), self.refresh_devices()) if not err else None))
         ttk.Button(dlg, text="OK", style="Accent.TButton", command=go).pack(anchor="e", pady=(8, 0))
@@ -520,7 +540,7 @@ class App:
     def qr_dialog(self) -> None:
         out = self._tablet_out()
         if not out:
-            self.test_lbl.configure(text="Abilita «Controlla il tablet» (scelta in alto) per abbinare il tablet.")
+            self.test_lbl.configure(text=tr("Abilita «Controlla il tablet» (scelta in alto) per abbinare il tablet."))
             return
         if not out.client.adb and not out.client.locate():
             self._offer_adb_download()
@@ -530,22 +550,22 @@ class App:
     def connect_dialog(self) -> None:
         out = self._tablet_out()
         if out:
-            self._ask("Connetti via Wi-Fi", [("IP:porta di connessione (es. 192.168.1.50:41234)", False)],
-                      lambda hp: (out.client.connect(hp), "Connesso")[1])
+            self._ask(tr("Connetti via Wi-Fi"), [(tr("IP:porta di connessione (es. 192.168.1.50:41234)"), False)],
+                      lambda hp: (out.client.connect(hp), tr("Connesso"))[1])
 
     def pair_dialog(self) -> None:
         out = self._tablet_out()
         if out:
-            self._ask("Abbina tablet (Debug wireless)",
-                      [("IP:porta di PAIRING (schermata «Abbina con codice»)", False), ("Codice di abbinamento", True)],
+            self._ask(tr("Abbina tablet (Debug wireless)"),
+                      [(tr("IP:porta di PAIRING (schermata «Abbina con codice»)"), False), (tr("Codice di abbinamento"), True)],
                       lambda hp, code: out.client.pair(hp, code))
 
     def test(self, name: str, action: str) -> None:
         d = self.engine.dispatcher
         if not d or name not in d.outputs:
-            self.test_lbl.configure(text="Uscita disattivata: abilitala nelle Impostazioni.")
+            self.test_lbl.configure(text=tr("Uscita disattivata: abilitala nelle Impostazioni."))
             return
-        self.test_lbl.configure(text=f"Test {ACTION_LABELS[action]} in corso…")
+        self.test_lbl.configure(text=tr('Test {v} in corso…', v=action_label(action)))
 
         def job(out):
             if isinstance(out, AdbOutput):
@@ -553,11 +573,11 @@ class App:
                     msg = out.test_response(action)
                     res = CommandResult(time.time(), name, action, True, msg)
                 except AdbError as exc:
-                    res = CommandResult(time.time(), name, action, False, f"ADB: {exc}")
+                    res = CommandResult(time.time(), name, action, False, tr('ADB: {exc}', exc=exc))
             else:
                 res = out.send(action)
             self.engine._on_result(res)
-            msg = ("DRY-RUN attivo: il comando NON è stato inviato. Chiudi e avvia con start.bat per inviarlo davvero."
+            msg = (tr("DRY-RUN attivo: il comando NON è stato inviato. Disattiva «Prova a vuoto» nelle Impostazioni (o riavvia senza --dry-run) per inviarlo davvero.")
                    if res.dry_run else res.message)
             self.ui_q.put(lambda: self.test_lbl.configure(text=msg))
         d.call(name, job)
@@ -577,7 +597,7 @@ class App:
         self.visible = False
         if not self._notified_hidden:
             self._notified_hidden = True
-            self.tray.notify("Il programma continua a funzionare in background. Clic sull'icona per riaprire la finestra.")
+            self.tray.notify(tr("Il programma continua a funzionare in background. Clic sull'icona per riaprire la finestra."))
 
     def show_window(self) -> None:
         self.root.deiconify()
@@ -610,7 +630,7 @@ class App:
         try:
             self._persist(cfg)
         except OSError as exc:
-            messagebox.showerror("Salvataggio", f"Impossibile scrivere config.json:\n{exc}")
+            messagebox.showerror(tr("Salvataggio"), tr('Impossibile scrivere config.json:\n{exc}', exc=exc))
         self.engine.apply_config(cfg, False)         # ricostruisce solo le uscite, la webcam non si ferma
         self.mode_var.set(self.current_mode())
         self.load_settings_into_form()
@@ -619,41 +639,41 @@ class App:
     def _labels_for(meta: dict) -> dict:
         lab = dict(meta.get("labels") or {})
         if not lab and all(str(c) in ACTION_UI for c in meta["choices"]):
-            lab = dict(ACTION_UI)
-        return {str(c): lab.get(str(c), str(c)) for c in meta["choices"]}
+            lab = {k: tr(v) for k, v in ACTION_UI.items()}
+        return {str(c): tr(lab.get(str(c), str(c))) for c in meta["choices"]}
 
     # ------------------------------------------------------------ aree sicure
     def _build_zones(self) -> None:
         t = self.tab_zones
         t.columnconfigure(1, weight=1)
-        left = card(t, "Aree sicure")
+        left = card(t, tr("Aree sicure"))
         left.grid(row=0, column=0, sticky="ns", padx=(0, 8))
-        ttk.Label(left, text="Guardare un'area sicura (per esempio la tastiera mentre scrivi) NON conta come «guardi altrove», "
-                             "anche se è fuori dallo schermo.", style="CardMuted.TLabel", wraplength=300, justify="left").pack(anchor="w")
+        ttk.Label(left, text=tr("Guardare un'area sicura (per esempio la tastiera mentre scrivi) NON conta come «guardi altrove», "
+                             "anche se è fuori dallo schermo."), style="CardMuted.TLabel", wraplength=300, justify="left").pack(anchor="w")
         self.zone_area_lbl = ttk.Label(left, text="", style="CardMuted.TLabel")
         self.zone_area_lbl.pack(anchor="w", pady=(6, 4))
         self.zone_tree = ttk.Treeview(left, columns=("name", "on"), show="headings", height=7, selectmode="browse")
-        self.zone_tree.heading("name", text="Nome")
-        self.zone_tree.heading("on", text="Stato")
+        self.zone_tree.heading("name", text=tr("Nome"))
+        self.zone_tree.heading("on", text=tr("Stato"))
         self.zone_tree.column("name", width=190)
         self.zone_tree.column("on", width=70, anchor="center")
         self.zone_tree.pack(fill="x")
-        ttk.Button(left, text="＋ Guarda i 4 angoli…", style="Accent.TButton", command=self.zone_wizard).pack(fill="x", pady=(10, 4))
-        ttk.Button(left, text="✏ Disegna sulla mappa", command=self.zone_draw_mode).pack(fill="x", pady=2)
-        ttk.Button(left, text="＋ Tastiera (stima)", command=lambda: self._zone_add(keyboard_preset())).pack(fill="x", pady=2)
+        ttk.Button(left, text=tr("＋ Guarda i 4 angoli…"), style="Accent.TButton", command=self.zone_wizard).pack(fill="x", pady=(10, 4))
+        ttk.Button(left, text=tr("✏ Disegna sulla mappa"), command=self.zone_draw_mode).pack(fill="x", pady=2)
+        ttk.Button(left, text=tr("＋ Tastiera (stima)"), command=lambda: self._zone_add(keyboard_preset())).pack(fill="x", pady=2)
         r = ttk.Frame(left, style="Card.TFrame")
         r.pack(fill="x", pady=(8, 0))
-        ttk.Button(r, text="Modifica…", command=self.zone_edit).pack(side="left")
+        ttk.Button(r, text=tr("Modifica…"), command=self.zone_edit).pack(side="left")
         ttk.Button(r, text="On/Off", command=self.zone_toggle).pack(side="left", padx=6)
-        ttk.Button(r, text="Elimina", command=self.zone_delete).pack(side="left")
-        right = card(t, "Mappa dello sguardo")
+        ttk.Button(r, text=tr("Elimina"), command=self.zone_delete).pack(side="left")
+        right = card(t, tr("Mappa dello sguardo"))
         right.grid(row=0, column=1, sticky="nsew")
         self.zmap = tk.Canvas(right, width=440, height=320, bg="#0b0e14", highlightthickness=1, highlightbackground=C["line"])
         self.zmap.pack()
         self.zmap.bind("<ButtonPress-1>", self._z_press)
         self.zmap.bind("<B1-Motion>", self._z_drag)
         self.zmap.bind("<ButtonRelease-1>", self._z_release)
-        self.zone_hint = ttk.Label(right, text="Blu = schermo · giallo = aree sicure · pallino = dove guardi ora.",
+        self.zone_hint = ttk.Label(right, text=tr("Blu = schermo · giallo = aree sicure · pallino = dove guardi ora."),
                                    style="CardMuted.TLabel", wraplength=430, justify="left")
         self.zone_hint.pack(anchor="w", pady=(8, 0))
 
@@ -665,8 +685,8 @@ class App:
         self._zone_sig = sig
         self.zone_tree.delete(*self.zone_tree.get_children())
         for i, z in enumerate(zones):
-            self.zone_tree.insert("", "end", iid=str(i), values=(z["name"], "attiva" if z["enabled"] else "off"))
-        self.zone_area_lbl.configure(text=f"Per l'area: {self._monitor_label(self.engine.cfg['calibration']['monitor'])}")
+            self.zone_tree.insert("", "end", iid=str(i), values=(z["name"], tr("attiva") if z["enabled"] else tr("off")))
+        self.zone_area_lbl.configure(text=tr("Per l'area: {monitor_label}", monitor_label=self._monitor_label(self.engine.cfg['calibration']['monitor'])))
 
     def _save_zones(self, zones: list) -> None:
         cfg = copy.deepcopy(self.engine.cfg)
@@ -675,7 +695,7 @@ class App:
         try:
             self._persist(cfg)
         except OSError as exc:
-            messagebox.showerror("Salvataggio", f"Impossibile scrivere config.json:\n{exc}")
+            messagebox.showerror(tr("Salvataggio"), tr('Impossibile scrivere config.json:\n{exc}', exc=exc))
         self.engine.apply_config(cfg, False)
         self._refresh_zone_list()
 
@@ -688,14 +708,14 @@ class App:
 
     def zone_wizard(self) -> None:
         if self.engine.model is None:
-            messagebox.showinfo("Aree sicure", "Prima calibra lo schermo (pulsante «Ricalibra»).")
+            messagebox.showinfo(tr("Aree sicure"), tr("Prima calibra lo schermo (pulsante «Ricalibra»)."))
             return
         n = len(self.engine.current_zones()) + 1
-        CornerWizard(self.root, self.engine, lambda z: (self._zone_add(z) if z else None), f"Area sicura {n}")
+        CornerWizard(self.root, self.engine, lambda z: (self._zone_add(z) if z else None), tr('Area sicura {n}', n=n))
 
     def zone_draw_mode(self) -> None:
         self._draw_mode = True
-        self.zone_hint.configure(text="Trascina sulla mappa per disegnare il rettangolo dell'area sicura.")
+        self.zone_hint.configure(text=tr("Trascina sulla mappa per disegnare il rettangolo dell'area sicura."))
 
     def zone_edit(self) -> None:
         i = self._selected_zone()
@@ -741,12 +761,12 @@ class App:
         (ax, ay), (bx, by) = self._draw_start, self._zxy(e)
         self._draw_start = self._draw_cur = None
         self._draw_mode = False
-        self.zone_hint.configure(text="Blu = schermo · giallo = aree sicure · pallino = dove guardi ora.")
+        self.zone_hint.configure(text=tr("Blu = schermo · giallo = aree sicure · pallino = dove guardi ora."))
         if abs(bx - ax) < 0.03 or abs(by - ay) < 0.03:
             return
-        zone = {"name": f"Area sicura {len(self.engine.current_zones()) + 1}", "enabled": True,
+        zone = {"name": tr('Area sicura {v}', v=len(self.engine.current_zones()) + 1), "enabled": True,
                 "x0": min(ax, bx), "y0": min(ay, by), "x1": max(ax, bx), "y1": max(ay, by)}
-        ZoneEditDialog(self.root, zone, self._zone_add, "Nuova area sicura")
+        ZoneEditDialog(self.root, zone, self._zone_add, tr("Nuova area sicura"))
 
     # ------------------------------------------------------------ aggiornamento periodico
     def refresh(self) -> None:
@@ -754,42 +774,42 @@ class App:
         col = STATE_COLOR[s["state"]]
         self.dot.itemconfigure(self.dot_item, fill=col)
         self.state_lbl.configure(text=s["label"], foreground=col)
-        self.tray.update(col, s["label"] + (" · in pausa" if s["paused"] else "") + (" · DRY-RUN" if s["dry_run"] else ""),
+        self.tray.update(col, s["label"] + (tr(" · in pausa") if s["paused"] else "") + (" · DRY-RUN" if s["dry_run"] else ""),
                          (self.current_mode(), s["paused"]))
         if self.mode_var.get() != self.current_mode():
             self.mode_var.set(self.current_mode())
         self._refresh_zone_list()
-        self.pill.configure(text=("DRY-RUN (nessun invio)" if s["dry_run"] else ""))
-        self.pause_btn.configure(text="▶ Riprendi" if s["paused"] else "⏸ Pausa")
+        self.pill.configure(text=(tr("DRY-RUN (nessun invio)") if s["dry_run"] else ""))
+        self.pause_btn.configure(text=tr("▶ Riprendi") if s["paused"] else tr("⏸ Pausa"))
         if s["paused"]:
-            self.prog_lbl.configure(text="Automazione in pausa")
+            self.prog_lbl.configure(text=tr("Automazione in pausa"))
             self.prog["value"] = 0
         elif s["progress_target"] is not None:
-            what = "«guardi altrove»" if s["progress_target"] == GazeState.LOOKING_AWAY else "«guardi il PC»"
-            self.prog_lbl.configure(text=f"Verso {what}…")
+            what = tr("«guardi altrove»") if s["progress_target"] == GazeState.LOOKING_AWAY else tr("«guardi il PC»")
+            self.prog_lbl.configure(text=tr('Verso {what}…', what=what))
             self.prog["value"] = s["progress"]
         else:
             self.prog_lbl.configure(text=" ")
             self.prog["value"] = 0
-        self.msg_lbl.configure(text=s["message"], foreground=C["bad"] if (not s["camera_ok"] or "mancante" in s["message"]) else C["muted"])
+        self.msg_lbl.configure(text=s["message"], foreground=C["bad"] if (not s["camera_ok"] or s["model_missing"]) else C["muted"])
         self._draw_map(self.map, s, 280, 170, 130)
         self._draw_map(self.zmap, s, 440, 320, 200)
         for n, lbl, last in (("tablet", self.tab_status, self.tab_last), ("pc_media", self.pc_status, self.pc_last)):
             o = s["outputs"].get(n)
             if o is None:
-                lbl.configure(text="⚪ Disattivato", foreground=C["idle"])
-                last.configure(text="Abilitalo in Impostazioni.")
+                lbl.configure(text=tr("⚪ Disattivato"), foreground=C["idle"])
+                last.configure(text=tr("Abilitalo in Impostazioni."))
                 continue
             ok = o.get("connected")
             name = o.get("model") or o.get("serial") or ""
-            lbl.configure(text=("🟢 Connesso" if ok else "🔴 Scollegato") + (f" · {name}" if name and n == "tablet" else "")
+            lbl.configure(text=(tr("🟢 Connesso") if ok else tr("🔴 Scollegato")) + (f" · {name}" if name and n == "tablet" else "")
                           + (f"\n{o['detail']}" if o.get("detail") else ""), foreground=C["ok"] if ok else C["bad"])
             r = o.get("last")
             if r is None:
-                last.configure(text="Ultimo comando: nessuno")
+                last.configure(text=tr("Ultimo comando: nessuno"))
             else:
-                st = "dry-run" if r.dry_run else ("OK" if r.ok else "ERRORE")
-                last.configure(text=f"Ultimo comando: {ACTION_LABELS.get(r.action, r.action)} · {st} · {time.strftime('%H:%M:%S', time.localtime(r.ts))}"
+                st = "dry-run" if r.dry_run else ("OK" if r.ok else tr("ERRORE"))
+                last.configure(text=tr('Ultimo comando: {get} · {st} · {strftime}', get=action_label(r.action), st=st, strftime=time.strftime('%H:%M:%S', time.localtime(r.ts)))
                                + ("" if r.ok else f"\n{r.message}"))
         self._preview(s)
         self._drain_log()

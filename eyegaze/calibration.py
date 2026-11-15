@@ -11,6 +11,7 @@ import numpy as np
 
 from .features import FEATURE_SCALES
 from .config import CALIBRATION_PATH, calibration_key, calibration_path
+from .i18n import tr
 
 MAX_YAW_DEG = 70.0   # oltre questa rotazione dal centro calibrato è sempre «altrove»
 
@@ -55,7 +56,7 @@ class GazeModel:
     def from_json(cls, d: dict) -> "GazeModel":
         w = np.array(d["weights"], dtype=float)
         if w.shape != (5, 2):
-            raise ValueError("calibrazione non valida")
+            raise ValueError(tr("calibrazione non valida"))
         return cls(w, float(d["center_yaw"]), float(d.get("rmse", 0.0)), d.get("area", {}), float(d.get("created", 0)))
 
     def save(self, path: Path = CALIBRATION_PATH) -> None:
@@ -96,7 +97,7 @@ def fit_model(samples: list[tuple[tuple[float, float], list[np.ndarray]]], ridge
         xs.append(np.concatenate([[1.0], np.median(good, axis=0)]))
         ys.append([tx, ty])
     if len(xs) < 5:
-        raise ValueError("Troppo pochi punti validi: assicurati che il volto resti visibile durante la calibrazione.")
+        raise ValueError(tr("Troppo pochi punti validi: assicurati che il volto resti visibile durante la calibrazione."))
     X, Y = np.array(xs), np.array(ys)
     reg = ridge * np.eye(X.shape[1])
     reg[0, 0] = 0.0                                         # il bias non si penalizza
@@ -106,23 +107,23 @@ def fit_model(samples: list[tuple[tuple[float, float], list[np.ndarray]]], ridge
     return GazeModel(W, center_yaw, rmse, area or {})
 
 
-def zone_from_points(points, pad: float = 0.08, name: str = "Area sicura") -> dict:
+def zone_from_points(points, pad: float = 0.08, name: str = tr("Area sicura")) -> dict:
     """Area sicura = riquadro (5°-95° percentile dei punti guardati) + margine, nelle coordinate dello schermo (0..1 = schermo)."""
     arr = np.array(points, dtype=float).reshape(-1, 2)
     if len(arr) < 8:
-        raise ValueError("Troppo pochi dati: tieni lo sguardo sull'area e il volto visibile.")
+        raise ValueError(tr("Troppo pochi dati: tieni lo sguardo sull'area e il volto visibile."))
     lo, hi = np.percentile(arr, 5, axis=0), np.percentile(arr, 95, axis=0)
     return {"name": name, "enabled": True, "x0": float(lo[0] - pad), "y0": float(lo[1] - pad),
             "x1": float(hi[0] + pad), "y1": float(hi[1] + pad)}
 
 
-def zone_from_corners(corners, pad: float = 0.03, name: str = "Area sicura") -> dict:
+def zone_from_corners(corners, pad: float = 0.03, name: str = tr("Area sicura")) -> dict:
     """Area sicura dai 4 angoli guardati uno a uno: riquadro che li contiene (mediana dei punti di ogni angolo) + margine."""
     pts = []
     for samples in corners:
         arr = np.array(samples, dtype=float).reshape(-1, 2)
         if len(arr) < 5:
-            raise ValueError("Troppo pochi dati su un angolo: tieni il volto visibile e lo sguardo fermo.")
+            raise ValueError(tr("Troppo pochi dati su un angolo: tieni il volto visibile e lo sguardo fermo."))
         pts.append(np.median(arr, axis=0))
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     return {"name": name, "enabled": True, "x0": float(min(xs) - pad), "y0": float(min(ys) - pad),
@@ -135,4 +136,4 @@ def in_zone(z: dict, x: float, y: float, margin: float = 0.0) -> bool:
 
 def keyboard_preset() -> dict:
     """Stima della zona sotto lo schermo (tastiera). Meglio registrarla guardandola davvero."""
-    return {"name": "Tastiera (stima)", "enabled": True, "x0": 0.0, "y0": 1.15, "x1": 1.0, "y1": 1.9}
+    return {"name": tr("Tastiera (stima)"), "enabled": True, "x0": 0.0, "y0": 1.15, "x1": 1.0, "y1": 1.9}

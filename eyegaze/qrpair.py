@@ -13,6 +13,7 @@ import time
 from typing import Callable, Optional
 
 from .adb import AdbClient, AdbError
+from .i18n import tr
 
 _LOWER = string.ascii_lowercase + string.digits
 _ALNUM = string.ascii_letters + string.digits
@@ -50,31 +51,31 @@ class QrPairing:
             timeout: float = 120.0, connect_wait: float = 20.0) -> str:
         """Attende il tablet, abbina e collega. Ritorna un messaggio di esito; solleva AdbError se non riesce o se annullato."""
         if not self.client.mdns_ok():
-            on_status("Preparo la ricerca dei dispositivi in rete…")
+            on_status(tr("Preparo la ricerca dei dispositivi in rete…"))
             self.client.enable_openscreen_mdns()
             if not self.client.mdns_ok():
-                raise AdbError("adb non riesce a cercare dispositivi in rete (mDNS non disponibile): usa «Abbina…» con il codice a 6 cifre.")
-        on_status("In attesa che il tablet inquadri il codice…")
+                raise AdbError(tr("adb non riesce a cercare dispositivi in rete (mDNS non disponibile): usa «Abbina…» con il codice a 6 cifre."))
+        on_status(tr("In attesa che il tablet inquadri il codice…"))
         deadline = self._clock() + timeout
         svc = None
         while svc is None:
             if cancel.is_set():
                 raise AdbError("annullato")
             if self._clock() > deadline:
-                raise AdbError("tempo scaduto: il tablet non ha inquadrato il codice (stessa rete Wi-Fi del PC?).")
+                raise AdbError(tr("tempo scaduto: il tablet non ha inquadrato il codice (stessa rete Wi-Fi del PC?)."))
             svc = next((s for s in self.client.mdns_services() if s.kind == "pairing" and s.name.lower() == self.name.lower()), None)
             if svc is None:
                 self._sleep(1.0)
-        on_status("Tablet trovato: abbinamento in corso…")
+        on_status(tr("Tablet trovato: abbinamento in corso…"))
         self.client.pair(svc.hostport, self._password)
-        on_status("Abbinato. Connessione al tablet…")
+        on_status(tr("Abbinato. Connessione al tablet…"))
         host = svc.hostport.rsplit(":", 1)[0]
         end = self._clock() + connect_wait
         while self._clock() < end and not cancel.is_set():
             ready = [d for d in self.client.devices() if d.ready]
             match = next((d for d in ready if host in d.serial or "_adb-tls-connect" in d.serial), None)
             if match:
-                return f"Abbinato e connesso: {match.label}"
+                return tr('Abbinato e connesso: {label}', label=match.label)
             conn = next((s for s in self.client.mdns_services() if s.kind == "connect" and s.hostport.rsplit(":", 1)[0] == host), None)
             if conn:
                 try:
@@ -82,4 +83,4 @@ class QrPairing:
                 except AdbError:
                     pass
             self._sleep(1.0)
-        return "Abbinamento riuscito. Premi «Aggiorna» e scegli il tablet; se non compare, usa «Connetti IP…»."
+        return tr("Abbinamento riuscito. Premi «Aggiorna» e scegli il tablet; se non compare, usa «Connetti IP…».")

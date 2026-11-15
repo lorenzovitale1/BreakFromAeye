@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .config import MODEL_PATH, ROOT, find_model
+from .i18n import tr
 
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 MODEL_SHA256 = "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
@@ -33,7 +34,7 @@ def download(url: str, dest: Path, sha256: Optional[str] = None, timeout: float 
                 h.update(chunk)
                 out.write(chunk)
         if sha256 and h.hexdigest() != sha256:
-            raise RuntimeError("file scaricato non valido (impronta SHA-256 diversa): download annullato")
+            raise RuntimeError(tr("file scaricato non valido (impronta SHA-256 diversa): download annullato"))
         os.replace(tmp, dest)
     finally:
         if os.path.exists(tmp):
@@ -54,7 +55,7 @@ def adb_path() -> Path:
 def install_adb() -> Path:
     """Scarica gli Android platform-tools ufficiali (Google) in <dati>/tools/platform-tools."""
     if sys.platform != "win32":
-        raise RuntimeError("Download automatico di adb disponibile solo su Windows: installa 'adb' con il tuo gestore di pacchetti.")
+        raise RuntimeError(tr("Download automatico di adb disponibile solo su Windows: installa 'adb' con il tuo gestore di pacchetti."))
     target = adb_path()
     if target.exists():
         return target
@@ -65,35 +66,35 @@ def install_adb() -> Path:
         with zipfile.ZipFile(zip_path) as z:
             for name in z.namelist():                          # niente path traversal
                 if not (base / name).resolve().is_relative_to(base):
-                    raise RuntimeError("archivio adb non valido")
+                    raise RuntimeError(tr("archivio adb non valido"))
             z.extractall(ADB_DIR)
     finally:
         zip_path.unlink(missing_ok=True)
     if not target.exists():
-        raise RuntimeError("adb non trovato nell'archivio scaricato")
+        raise RuntimeError(tr("adb non trovato nell'archivio scaricato"))
     return target
 
 
-def cli_setup(ask: Callable[[str], bool] = lambda q: input(q + " [s/N] ").strip().lower() in ("s", "si", "y", "yes")) -> int:
+def cli_setup(ask: Callable[[str], bool] = lambda q: input(q + tr(" [s/N] ")).strip().lower() in ("s", "si", "y", "yes")) -> int:
     """`python -m eyegaze --setup`: scarica i file mancanti chiedendo conferma per ciascuno."""
     rc = 0
     if find_model().exists():
-        print("Modello di rilevamento: già presente.")
-    elif ask("Scaricare il modello MediaPipe face_landmarker.task (~4 MB, storage.googleapis.com)?"):
+        print(tr("Modello di rilevamento: già presente."))
+    elif ask(tr("Scaricare il modello MediaPipe face_landmarker.task (~4 MB, storage.googleapis.com)?")):
         try:
             print("Scaricato:", ensure_model())
         except Exception as exc:
-            print(f"Errore download modello: {exc}")
+            print(tr('Errore download modello: {exc}', exc=exc))
             rc = 1
     else:
-        print("Modello non scaricato: senza di esso il rilevamento non funziona.")
+        print(tr("Modello non scaricato: senza di esso il rilevamento non funziona."))
     from .adb import find_adb
     if find_adb():
-        print("adb: già disponibile.")
-    elif sys.platform == "win32" and ask("Scaricare Android platform-tools (adb, ~8 MB, dl.google.com) per controllare il tablet?"):
+        print(tr("adb: già disponibile."))
+    elif sys.platform == "win32" and ask(tr("Scaricare Android platform-tools (adb, ~8 MB, dl.google.com) per controllare il tablet?")):
         try:
             print("Installato:", install_adb())
         except Exception as exc:
-            print(f"Errore download adb: {exc}")
+            print(tr('Errore download adb: {exc}', exc=exc))
             rc = 1
     return rc

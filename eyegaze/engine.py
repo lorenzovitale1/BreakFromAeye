@@ -13,7 +13,8 @@ from .calibration import MAX_YAW_DEG, GazeModel, fit_model, in_zone
 from .capture import FaceDetector, FrameResult, FrameSource, ModelMissing
 from .outputs import AdbOutput, CommandResult, Dispatcher, DryRunOutput, Output, PcMediaOutput
 from .statemachine import GazeStateMachine, Transition
-from .states import ACTION_LABELS, STATE_LABELS, GazeState, Obs
+from .states import GazeState, Obs, action_label, state_label
+from .i18n import tr
 
 
 def build_outputs(cfg: dict, printer: Callable[[str], None] = print) -> list[Output]:
@@ -47,6 +48,7 @@ class Engine:
         self._last_cmd: dict[str, Optional[CommandResult]] = {}
         self._error: str = ""
         self._cam_msg: str = ""
+        self._model_missing = False
         self._gaze_xy: Optional[tuple[float, float]] = None
         self._smoothed: Optional[np.ndarray] = None
         self._was_at = True
@@ -83,6 +85,7 @@ class Engine:
 
     def _setup(self) -> None:
         self._error = ""
+        self._model_missing = False
         if self._injected_source is not None:
             self.source = self._injected_source
         else:
@@ -90,9 +93,10 @@ class Engine:
                 det = FaceDetector()
             except ModelMissing as exc:
                 self._error = str(exc)
+                self._model_missing = True
                 det = None
             except Exception as exc:
-                self._error = f"MediaPipe non utilizzabile: {exc}"
+                self._error = tr('MediaPipe non utilizzabile: {exc}', exc=exc)
                 det = None
             self.source = FrameSource(self.cfg["camera"], self.cfg["show_preview"], det)
         self._setup_outputs()
@@ -160,7 +164,7 @@ class Engine:
     def _observe(self, res: FrameResult) -> Obs:
         det = self.cfg["detection"]
         if res.kind == "camera_fail":
-            self._cam_msg = res.detail or "webcam non disponibile"
+            self._cam_msg = res.detail or tr("webcam non disponibile")
             self._gaze_xy = None
             return Obs.CAMERA_FAIL
         self._cam_msg = ""
@@ -205,8 +209,8 @@ class Engine:
     def _on_result(self, r: CommandResult) -> None:
         with self._lock:
             self._last_cmd[r.output] = r
-        tag = "OK" if r.ok else "ERRORE"
-        self._printer(f"[{time.strftime('%H:%M:%S')}] {r.output}: {ACTION_LABELS.get(r.action, r.action)} -> {tag} {r.message}")
+        tag = "OK" if r.ok else tr("ERRORE")
+        self._printer(f"[{time.strftime('%H:%M:%S')}] {r.output}: {action_label(r.action)} -> {tag} {r.message}")
 
     # ---------------------------------------------------------------- controlli da GUI
     def set_paused(self, paused: bool) -> None:
@@ -296,11 +300,11 @@ class Engine:
             disp = GazeState.UNKNOWN
         msg = self._error or self._cam_msg
         if not msg and self.model is None:
-            msg = "Calibrazione necessaria: premi «Ricalibra»."
+            msg = tr("Calibrazione necessaria: premi «Ricalibra».")
         elif not msg and self.sm.warming_up and not self.paused:
-            msg = "Stabilizzazione iniziale… nessun comando verrà inviato."
+            msg = tr("Stabilizzazione iniziale… nessun comando verrà inviato.")
         return {
-            "state": disp, "label": STATE_LABELS[disp], "camera_ok": self.sm.camera_ok,
+            "state": disp, "label": state_label(disp), "model_missing": self._model_missing, "camera_ok": self.sm.camera_ok,
             "progress_target": tgt, "progress": frac, "gaze": self._gaze_xy,
             "margin": self.cfg["detection"]["screen_margin"], "paused": self.paused,
             "calibrated": self.model is not None, "calibrating": self._calibrating,

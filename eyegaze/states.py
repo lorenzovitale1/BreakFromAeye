@@ -26,4 +26,14 @@ STATE_LABELS = {
 }
 
 ACTIONS = ("play", "pause", "none")
+def state_label(state: "GazeState") -> str:
+    from .i18n import tr
+    return tr(STATE_LABELS[state])
+
+
+def action_label(action: str) -> str:
+    from .i18n import tr
+    return tr(ACTION_LABELS.get(action, action))
+
+
 ACTION_LABELS = {"play": "PLAY", "pause": "PAUSA", "none": "nessuno"}

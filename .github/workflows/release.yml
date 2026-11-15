@@ -49,4 +49,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/BreakFromAeye-Setup-*.exe
+          body_path: packaging/release-notes.md          # bilingual EN/IT notes, followed by the auto-generated changelog
           generate_release_notes: true

@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 set PYTHONUTF8=1
 if not exist ".venv\Scripts\python.exe" (
-  echo Ambiente non trovato: esegui prima setup.bat
+  echo Environment not found: run setup.bat first. / Ambiente non trovato: esegui prima setup.bat
   pause
   exit /b 1
 )

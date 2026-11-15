@@ -10,6 +10,7 @@ import numpy as np
 
 from .config import find_model
 from .features import FaceFeatures, extract_features
+from .i18n import tr
 
 
 @dataclass
@@ -30,7 +31,7 @@ class FaceDetector:
     def __init__(self, model_path=None):
         model_path = model_path or find_model()
         if not model_path.exists():
-            raise ModelMissing(f"Modello mancante: {model_path.name}. Riapri l'app e accetta il download, oppure esegui «python -m eyegaze --setup».")
+            raise ModelMissing(tr("Modello mancante: {name}. Riapri l'app e accetta il download, oppure esegui «python -m eyegaze --setup».", name=model_path.name))
         import mediapipe as mp
         from mediapipe.tasks import python as mpt
         from mediapipe.tasks.python import vision
@@ -111,14 +112,14 @@ class FrameSource:
             if now - self._last_open_try >= self.REOPEN_S:
                 self._open()
             if self._cap is None:
-                return FrameResult("camera_fail", detail="webcam non disponibile")
+                return FrameResult("camera_fail", detail=tr("webcam non disponibile"))
         ok, frame = self._cap.read()
         now = time.monotonic()
         if not ok or frame is None:
             if now - self._last_ok >= self.READ_FAIL_S:
                 self._cap.release()
                 self._cap = None
-                return FrameResult("camera_fail", detail="webcam scollegata o errore di lettura")
+                return FrameResult("camera_fail", detail=tr("webcam scollegata o errore di lettura"))
             return FrameResult("no_data")
         self._last_ok = now
 
@@ -127,11 +128,11 @@ class FrameSource:
         if sig != self._sig:
             self._sig, self._last_change = sig, now
         if now - self._last_change >= self.FROZEN_S:
-            return FrameResult("camera_fail", detail="webcam bloccata (immagine ferma)")
+            return FrameResult("camera_fail", detail=tr("webcam bloccata (immagine ferma)"))
         if float(small.mean()) < 4.0:
             self._dark_since = self._dark_since or now
             if now - self._dark_since >= self.DARK_S:
-                return FrameResult("camera_fail", detail="immagine nera (obiettivo coperto?)")
+                return FrameResult("camera_fail", detail=tr("immagine nera (obiettivo coperto?)"))
         else:
             self._dark_since = None
 

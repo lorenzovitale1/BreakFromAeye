@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .config import BUNDLE_DIR, ROOT
+from .i18n import tr
 
 KEY_PLAY, KEY_PAUSE, KEY_PLAY_PAUSE = 126, 127, 85
 STATE_PLAYING, STATE_PAUSED = 3, 2
@@ -23,6 +24,10 @@ Runner = Callable[..., "subprocess.CompletedProcess[str]"]
 
 class AdbError(RuntimeError):
     pass
+
+
+class AdbNotFound(AdbError):
+    """adb non è installato / non si trova (permette alla GUI di proporre il download senza confrontare testi tradotti)."""
 
 
 @dataclass(frozen=True)
@@ -90,20 +95,20 @@ class AdbClient:
 
     def _exec(self, *args: str, timeout: Optional[float] = None, secret: bool = False) -> str:
         if not self.adb and not self.locate():
-            raise AdbError("adb non trovato: esegui setup.bat (o «breakfromaeye --setup») oppure indica il percorso in Impostazioni.")
+            raise AdbNotFound(tr("adb non trovato: esegui setup.bat (o «breakfromaeye --setup») oppure indica il percorso in Impostazioni."))
         try:
             kw: dict = {"timeout": timeout or self.timeout}
             if self.env_extra:
                 kw["env"] = {**os.environ, **self.env_extra}
             cp = self._run([self.adb, *args], **kw)
         except subprocess.TimeoutExpired:
-            raise AdbError("adb non risponde (timeout).")
+            raise AdbError(tr("adb non risponde (timeout)."))
         except OSError as exc:
-            raise AdbError(f"impossibile eseguire adb: {exc}")
+            raise AdbError(tr('impossibile eseguire adb: {exc}', exc=exc))
         out = ((cp.stdout or "") + (cp.stderr or "")).strip()
         if cp.returncode != 0:
-            shown = "operazione non riuscita" if secret else out[:200]
-            raise AdbError(shown or f"adb codice {cp.returncode}")
+            shown = tr("operazione non riuscita") if secret else out[:200]
+            raise AdbError(shown or tr('adb codice {returncode}', returncode=cp.returncode))
         return out
 
     # ---- dispositivi ----------------------------------------------------
@@ -121,15 +126,15 @@ class AdbClient:
     def connect(self, hostport: str) -> str:
         out = self._exec("connect", hostport, timeout=12)
         if "connected" not in out.lower() or "cannot" in out.lower() or "failed" in out.lower():
-            raise AdbError(out[:200] or "connessione non riuscita")
+            raise AdbError(out[:200] or tr("connessione non riuscita"))
         return out
 
     def pair(self, hostport: str, code: str) -> str:
         """Il codice è l'argomento del comando ma non finisce mai in log o messaggi d'errore."""
         out = self._exec("pair", hostport, code, timeout=20, secret=True)
         if "successfully" not in out.lower():
-            raise AdbError("abbinamento non riuscito: controlla porta di pairing e codice (scadono presto).")
-        return "Abbinamento riuscito"
+            raise AdbError(tr("abbinamento non riuscito: controlla porta di pairing e codice (scadono presto)."))
+        return tr("Abbinamento riuscito")
 
     def disconnect(self, hostport: str = "") -> None:
         try:

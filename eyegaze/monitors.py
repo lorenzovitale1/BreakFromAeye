@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 from typing import NamedTuple
+from .i18n import tr
 
 
 class Rect(NamedTuple):
@@ -56,16 +57,16 @@ def monitor_options() -> list[tuple[str, str]]:
     """[(valore per config, etichetta)] per la scelta dell'area da monitorare."""
     mons = list_monitors()
     if len(mons) < 2:
-        return [("all", "Schermo")]
+        return [("all", tr("Schermo"))]
     prim = mons[0]
-    opts = [("all", f"Tutti i monitor ({len(mons)})")]
+    opts = [("all", tr('Tutti i monitor ({n})', n=len(mons)))]
     for i, m in enumerate(mons):
         if m.primary:
-            where = "principale"
+            where = tr("principale")
         else:
-            where = ("a sinistra" if m.x < prim.x else "a destra" if m.x >= prim.x + prim.w
-                     else "sopra" if m.y < prim.y else "sotto")
-        opts.append((str(i), f"Monitor {i + 1} · {where} · {m.w}x{m.h}"))
+            where = (tr("a sinistra") if m.x < prim.x else tr("a destra") if m.x >= prim.x + prim.w
+                     else tr("sopra") if m.y < prim.y else tr("sotto"))
+        opts.append((str(i), tr('Monitor {v} · {where} · {w}x{h}', v=i + 1, where=where, w=m.w, h=m.h)))
     return opts
 
 

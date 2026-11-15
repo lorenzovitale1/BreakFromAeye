@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from .i18n import tr
 
 try:
     import pystray
@@ -33,14 +34,14 @@ class Tray:
         radio = lambda label, key: pystray.MenuItem(                       # noqa: E731
             label, lambda icon, item: h["mode"](key), checked=lambda item: self._mode() == key, radio=True)
         menu = pystray.Menu(
-            pystray.MenuItem("Apri finestra", lambda icon, item: h["show"](), default=True),
-            pystray.MenuItem(lambda item: "Riprendi automazione" if self._paused() else "Pausa automazione",
+            pystray.MenuItem(tr("Apri finestra"), lambda icon, item: h["show"](), default=True),
+            pystray.MenuItem(lambda item: tr("Riprendi automazione") if self._paused() else tr("Pausa automazione"),
                              lambda icon, item: h["pause"]()),
-            pystray.MenuItem("Controlla", pystray.Menu(radio("Tablet", "tablet"), radio("Video sul PC", "pc"),
-                                                       radio("Entrambi", "both"))),
-            pystray.MenuItem("Ricalibra", lambda icon, item: h["calibrate"]()),
+            pystray.MenuItem(tr("Controlla"), pystray.Menu(radio(tr("Tablet"), "tablet"), radio(tr("Video sul PC"), "pc"),
+                                                       radio(tr("Entrambi"), "both"))),
+            pystray.MenuItem(tr("Ricalibra"), lambda icon, item: h["calibrate"]()),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Esci", lambda icon, item: h["quit"]()))
+            pystray.MenuItem(tr("Esci"), lambda icon, item: h["quit"]()))
         try:
             self.icon = pystray.Icon("eyegaze", make_icon(self._color), "BreakFromAeye", menu)
             self.icon.run_detached()

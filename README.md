@@ -2,156 +2,164 @@
 
 # BreakFromAeye 👁
 
-> *A break from AI + eye.* Distogli lo sguardo dal PC e il tuo video parte.
+**English** · **[Italiano](README.it.md)**
+
+> *A break from AI + eye.* Look away from your PC and your video starts.
 
 [![tests](https://github.com/lorenzovitale1/BreakFromAeye/actions/workflows/tests.yml/badge.svg)](https://github.com/lorenzovitale1/BreakFromAeye/actions/workflows/tests.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 
-Guardi un video sul **tablet** mentre lavori al **PC**? Questo programma usa **solo la webcam del PC** per capire se stai guardando lo schermo
-e mette in play/pausa il video di conseguenza. Niente eye tracker, niente cloud: tutto gira in locale.
+Watching a video on your **tablet** while you work at your **PC**? This program uses **only your PC webcam** to tell whether you are looking at the screen
+and plays or pauses the video accordingly. No eye tracker, no cloud: everything runs locally.
 
-| Uscita | Guardi altrove (≥ 1,5 s) | Torni a guardare il PC (≥ 0,8 s) |
+| Output | You look away (≥ 1.5 s) | You look back at the PC (≥ 0.8 s) |
 |---|---|---|
-| 📱 **Tablet Android** (ADB via Wi-Fi) | **PLAY** | **PAUSA** |
-| 🖥 **Video sul PC** (YouTube ecc. nel browser) | **PAUSA** | **PLAY** |
+| 📱 **Android tablet** (ADB over Wi-Fi) | **PLAY** | **PAUSE** |
+| 🖥 **Video on the PC** (YouTube etc. in the browser) | **PAUSE** | **PLAY** |
 
-Tempi e azioni si cambiano dall'interfaccia. Tablet e PC si possono usare **separatamente o insieme**.
-*English summary: [README.en.md](README.en.md).*
+Timings and actions are configurable from the interface. Tablet and PC can be used **separately or together**.
+The interface is available in **English and Italian** (automatic, following the Windows language; change it in *Settings → Interface → Language*).
 
-## Funzioni
-- **Scelta rapida tablet / PC / entrambi** nella schermata principale (e dal menu dell'icona).
-- **Aree sicure**: zone dove guardare *non* conta come "guardi altrove" (es. la tastiera). Le definisci guardando i 4 angoli
-  (con bip di inizio/fine, perché fuori dallo schermo non si vedono i punti), disegnandole sulla mappa o scrivendo le coordinate.
-- **Più monitor**: valuta lo sguardo su tutti gli schermi o su uno solo, con una calibrazione salvata per ciascuna scelta.
-- **Resta in background**: chiudendo la finestra il programma va nell'area di notifica (freccia ^ vicino all'orologio), senza finestre nere.
-  Modificabile in *Impostazioni → Interfaccia*.
-- Calibrazione a 9 punti, anti-falsi-positivi (ammiccamenti, occhiate rapide), un solo comando per ogni transizione, modalità *dry-run*.
-- Webcam scollegata/bloccata/coperta → stato "incerto" e **nessun comando**. Nessun fotogramma viene salvato o inviato in rete.
+## Features
+- **Quick tablet / PC / both switch** on the main screen (and in the tray-icon menu).
+- **Tablet pairing with a QR code**: scan the code shown by the program and Wireless debugging connects by itself.
+- **Safe areas**: zones where looking does *not* count as "looking away" (e.g. the keyboard). Define them by looking at the 4 corners
+  (with start/end beeps, since you cannot see dots outside the screen), by drawing on the map, or by typing coordinates.
+- **Multiple monitors**: evaluate your gaze on all screens or on just one, with a separate saved calibration for each choice.
+- **Runs in the background**: closing the window sends the program to the notification area (the ^ arrow near the clock) — no black console window.
+  Configurable in *Settings → Interface*.
+- 9-point calibration, false-trigger protection (blinks, quick glances), exactly one command per transition, *dry-run* mode.
+- Webcam unplugged/frozen/covered → "uncertain" state and **no commands**. No frame is ever saved or sent over the network.
 
-## Installazione (Windows 10/11)
+## Install (Windows 10/11)
 
-**Consigliata — installer** (non serve Python, include tutto: modello di rilevamento e `adb`)
-1. Scarica `BreakFromAeye-Setup-<versione>.exe` dalla pagina [Releases](https://github.com/lorenzovitale1/BreakFromAeye/releases).
-2. Eseguilo: l'installazione è per il tuo utente (nessun permesso di amministratore). Puoi scegliere il collegamento sul Desktop e l'avvio con Windows.
-3. Il programma compare nel menu Start e in *App e funzionalità* (da lì si disinstalla).
+**Recommended — installer** (no Python needed; it bundles everything: the detection model and `adb`)
+1. Download `BreakFromAeye-Setup-<version>.exe` from the [Releases](https://github.com/lorenzovitale1/BreakFromAeye/releases) page.
+2. Run it: it installs for your user only (no administrator rights). You can choose a Desktop shortcut and start with Windows.
+   The installer is available in English and Italian (it follows the Windows language).
+3. The program appears in the Start menu and in *Apps & features* (uninstall from there).
 
-> Windows può mostrare *"Windows ha protetto il PC"* perché l'installer non è firmato con un certificato a pagamento:
-> clicca **Maggiori informazioni → Esegui comunque**. Il codice è tutto qui, e l'installer è costruito automaticamente da GitHub Actions.
+> Windows may show *"Windows protected your PC"* because the installer is not signed with a paid certificate:
+> click **More info → Run anyway**. All the code is here, and the installer is built automatically by GitHub Actions.
 
-**Da codice sorgente** — servono Windows 10/11, una webcam, **Python 3.10–3.12** ([python.org](https://www.python.org/downloads/) o `winget install Python.Python.3.12`).
+**From source** — you need Windows 10/11, a webcam and **Python 3.10–3.12** ([python.org](https://www.python.org/downloads/) or `winget install Python.Python.3.12`).
 
-**A) Scarica lo ZIP**
-1. Sulla pagina del repository: **Code → Download ZIP**, estrai la cartella dove vuoi.
-2. Doppio clic su **`setup.bat`** e rispondi alle domande (modello di rilevamento ~4 MB, `adb` ~8 MB solo se usi il tablet, collegamento sul Desktop).
-3. Avvia dal collegamento **BreakFromAeye** sul Desktop (oppure `start.vbs`).
+**A) Download the ZIP**
+1. On the repository page: **Code → Download ZIP**, extract it wherever you like.
+2. Double-click **`setup.bat`** and answer the questions (detection model ~4 MB, `adb` ~8 MB only if you use the tablet, Desktop shortcut).
+3. Start it from the **BreakFromAeye** Desktop shortcut (or `start.vbs`).
 
-**B) Con git**
+**B) With git**
 ```bash
 git clone https://github.com/lorenzovitale1/BreakFromAeye.git
 cd BreakFromAeye
 setup.bat
 ```
 
-**C) Con pip / pipx** (i dati personali finiscono in `%APPDATA%\BreakFromAeye`)
+**C) With pip / pipx** (personal data goes to `%APPDATA%\BreakFromAeye`)
 ```bash
 pipx install git+https://github.com/lorenzovitale1/BreakFromAeye.git
-breakfromaeye --setup      # scarica modello e adb, chiedendo conferma
-breakfromaeye-gui          # avvia senza finestra di comando
+breakfromaeye --setup      # downloads the model and adb, asking first
+breakfromaeye-gui          # starts without a console window
 ```
-Tutti i download sono facoltativi e chiesti prima; il modello è verificato con SHA-256.
+Every download is optional and asked for first; the model is verified with SHA-256.
 
-## Primo avvio
-1. Il programma propone la **calibrazione** (~30 s): segui con lo sguardo i 9 punti.
-2. Nella scheda **Stato** guarda la *mappa dello sguardo*: il rettangolo blu è lo schermo. Se scatta guardando i bordi, alza *Margine schermo*.
-3. Prova prima con `start-dryrun.bat` (mostra i comandi senza inviarli: compare il badge **DRY-RUN**), poi avvia normalmente.
-4. Nei primi secondi si "stabilizza": non invia nulla e adotta lo stato corrente.
+## First start
+1. The program offers the **calibration** (~30 s): follow the 9 points with your eyes.
+2. On the **Status** tab look at the *gaze map*: the blue rectangle is your screen. If it triggers while you look at the edges, raise *Screen margin*.
+3. Try `start-dryrun.bat` first (shows the commands without sending them; the **DRY-RUN** badge is visible), then start normally.
+4. For the first few seconds it "settles": it sends nothing and adopts the current state.
 
-## Tablet Android (ADB via Wi-Fi)
-Sul tablet (Android 11+): *Impostazioni → Opzioni sviluppatore → **Debug wireless***, con tablet e PC sulla **stessa rete fidata**.
-1. Tocca **la scritta** "Debug wireless" (non l'interruttore) per aprire la pagina di abbinamento.
-2. **Abbinamento — metodo più rapido, con QR**: nell'app premi **📷 Abbina con codice QR…**; sul tablet scegli *Abbina dispositivo con codice QR* e inquadra il codice mostrato sul PC.
-   Il programma trova il tablet in rete, completa l'abbinamento e lo collega da solo.
-   *Alternativa, con il codice a 6 cifre:* **Abbina…** → IP:porta di *abbinamento* + codice, poi **Connetti IP…** → IP:porta della pagina principale (la porta è diversa).
-3. **Aggiorna**, scegli il tablet nella lista, poi **Test PLAY / Test PAUSA** con un video già aperto sul tablet.
+## Android tablet (ADB over Wi-Fi)
+On the tablet (Android 11+): *Settings → Developer options → **Wireless debugging***, with tablet and PC on the **same trusted network**.
+1. Tap the **label** "Wireless debugging" (not the switch) to open the pairing page.
+2. **Pairing — fastest way, with a QR code**: in the app press **📷 Pair with QR code…**; on the tablet choose *Pair device with QR code* and scan the code shown on the PC.
+   The program finds the tablet on the network, completes the pairing and connects it by itself.
+   *Alternative, with the 6-digit code:* **Pair…** → *pairing* IP:port + code, then **Connect IP…** → IP:port of the main page (the port is different).
+3. **Refresh**, pick the tablet from the list, then **Test PLAY / Test PAUSE** with a video already open on the tablet.
 
-Il QR contiene un nome e una password casuali, validi solo per quella sessione (2 minuti). Se l'abbinamento non parte, controlla che PC e tablet siano sulla
-stessa rete Wi-Fi (le reti "ospiti" spesso bloccano la ricerca in rete) e ripiega sul codice a 6 cifre.
+The QR contains a random name and password, valid only for that session (2 minutes). If pairing does not start, make sure PC and tablet are on the same Wi-Fi
+network ("guest" networks often block device discovery) and fall back to the 6-digit code.
 
-Comandi distinti e idempotenti (`keyevent 126` = PLAY, `127` = PAUSA), non un toggle. Alcune app **ignorano** i tasti multimediali: in quel caso
-imposta *Metodo* su `toggle_if_needed` (legge lo stato del player con `dumpsys media_session`). Non vengono aggirati DRM o protezioni.
-Android < 11: collegamento USB iniziale e `adb tcpip 5555`. Se i dispositivi sono più d'uno devi sceglierlo: non si invia mai a uno non selezionato.
-Non abilitare il debug wireless su reti non fidate; i codici di abbinamento non vengono registrati.
+Distinct, idempotent commands (`keyevent 126` = PLAY, `127` = PAUSE), not a toggle. Some apps **ignore** media keys: then set *Method* to `toggle_if_needed`
+(it reads the player state with `dumpsys media_session`). DRM or protections are never bypassed.
+Android < 11: first connect with a USB cable and run `adb tcpip 5555`. If several devices are connected you must pick one: nothing is ever sent to an unselected device.
+Do not enable wireless debugging on untrusted networks; pairing codes are never logged.
 
-## Video sul PC (YouTube, anche sul secondo schermo)
-Scegli **🖥 Video sul PC** (o *Entrambi*) in alto nella scheda Stato. Usa i controlli multimediali di Windows con Play/Pausa **espliciti** (non il tasto toggle):
-funziona con i video nel browser (Chrome/Edge/Firefox) già avviati. Con più player attivi imposta *Filtro applicazione* (`chrome`, `msedge`…).
-Con il video sul secondo schermo calibra *tutti i monitor* oppure solo quello.
+## Video on the PC (YouTube, also on a second monitor)
+Choose **🖥 Video on the PC** (or *Both*) at the top of the Status tab. It uses the Windows media controls with **explicit** Play/Pause (not the toggle key):
+it works with videos already playing in the browser (Chrome/Edge/Firefox). With several active players set *Application filter* (`chrome`, `msedge`…).
+With the video on a second monitor, calibrate *all monitors* or just that one.
 
-## Aree sicure
-Scheda **Aree sicure** → *Guarda i 4 angoli…*: segui le istruzioni a schermo e i bip (acuto = inizia a guardare l'angolo, due bassi = finito),
-nell'ordine alto-sx, alto-dx, basso-dx, basso-sx. Oppure *Disegna sulla mappa* / *Modifica…* per i valori numerici (0–1 = schermo, >1 = sotto/destra).
-Le aree sono salvate per ciascuna area monitorata; dopo una nuova calibrazione conviene registrarle di nuovo.
+## Safe areas
+**Safe areas** tab → *Look at the 4 corners…*: follow the on-screen instructions and the beeps (high = start looking at the corner, two low = done),
+in the order top-left, top-right, bottom-right, bottom-left. Or use *Draw on the map* / *Edit…* for numeric values (0–1 = screen, >1 = below/right).
+Areas are saved per monitored area; after a new calibration it is best to record them again.
 
-## Impostazioni principali (`config.json`, creato al primo salvataggio)
-| Chiave | Predef. | Significato |
+## Main settings (`config.json`, created on first save)
+| Key | Default | Meaning |
 |---|---|---|
-| `timing.away_seconds` / `return_seconds` | 1.5 / 0.8 | secondi "altrove" / "sul PC" prima dell'azione |
-| `timing.glitch_tolerance_seconds` | 0.25 | disturbi più brevi non interrompono il conteggio |
-| `timing.cooldown_seconds` | 1.0 | pausa minima tra due comandi |
-| `detection.no_face_is_away` | true | volto assente (webcam ok) = "altrove" |
-| `detection.screen_margin` / `hysteresis` / `smoothing` | 0.12 / 0.06 / 0.45 | tolleranza ai bordi, isteresi, filtro |
-| `outputs.tablet.*`, `outputs.pc_media.*` | — | attivazione, azioni, dispositivo, metodo |
-| `calibration.monitor` | `all` | `all` o indice del monitor |
-| `ui.close_action` | `tray` | `tray` = nascondi nell'area di notifica, `quit` = chiudi |
+| `timing.away_seconds` / `return_seconds` | 1.5 / 0.8 | seconds "away" / "on the PC" before the action runs |
+| `timing.glitch_tolerance_seconds` | 0.25 | shorter glitches do not interrupt the count |
+| `timing.cooldown_seconds` | 1.0 | minimum pause between two commands |
+| `detection.no_face_is_away` | true | no face (webcam OK) = "away" |
+| `detection.screen_margin` / `hysteresis` / `smoothing` | 0.12 / 0.06 / 0.45 | edge tolerance, hysteresis, filter |
+| `outputs.tablet.*`, `outputs.pc_media.*` | — | enabling, actions, device, method |
+| `calibration.monitor` | `all` | `all` or a monitor index |
+| `ui.language` | `auto` | `auto` (Windows language), `it` or `en` |
+| `ui.close_action` | `tray` | `tray` = hide in the notification area, `quit` = exit |
 
-Tutte le opzioni (con descrizioni) sono nella scheda **Impostazioni**. `python -m eyegaze --help` elenca le opzioni da terminale
-(`--dry-run`, `--minimized`, `--headless`, `--simulate`, `--list-devices`, `--check-camera`, `--setup`).
+All options (with descriptions) are on the **Settings** tab. `python -m eyegaze --help` lists the command-line options
+(`--dry-run`, `--minimized`, `--headless`, `--simulate`, `--list-devices`, `--check-camera`, `--setup`, `--selftest`).
 
-## Come funziona
-Webcam → MediaPipe Face Landmarker (478 punti con iridi, posa della testa) → feature (yaw, pitch, posizione delle iridi) → regressione appresa
-dalla calibrazione → punto stimato rispetto allo schermo → "sul PC" se dentro lo schermo + margine (o in un'area sicura), con isteresi →
-macchina a stati con durate minime → un comando per transizione. Elaborazione locale; l'anteprima di debug è disattivata di default.
+## How it works
+Webcam → MediaPipe Face Landmarker (478 landmarks with irises, head pose) → features (yaw, pitch, iris position) → regression learned during
+calibration → estimated point relative to the screen → "on the PC" if inside the screen + margin (or inside a safe area), with hysteresis →
+state machine with minimum durations → one command per transition. Everything is processed locally; the debug preview is off by default.
 
-## Limiti
-- Precisione **molto inferiore a un eye tracker dedicato**: distingue "sul monitor" da "altrove", non il punto esatto.
-- La calibrazione vale per postura/posizione simili; ricalibra se cambi postazione o luce. Occhiali scuri e controluce peggiorano i risultati.
-- Alcuni player Android ignorano i tasti multimediali. Il progetto è un esperimento/strumento personale, **non** un dispositivo di sicurezza.
+## Limits
+- Accuracy is **far below a dedicated eye tracker**: it tells "on the monitor" from "elsewhere", not the exact point.
+- Calibration holds for a similar posture/position; recalibrate if you move or the light changes. Dark glasses and backlight hurt the results.
+- Some Android players ignore media keys. This is a personal-productivity tool, **not** a safety device.
 
-## Risoluzione problemi
-| Problema | Cosa fare |
+## Troubleshooting
+| Problem | What to do |
 |---|---|
-| Non succede niente (compare **DRY-RUN**) | disattiva *Prova a vuoto* o avvia senza `--dry-run` |
-| "Modello mancante" | riapri l'app e accetta il download, o `breakfromaeye --setup` |
-| Tablet "Scollegato" | stessa rete Wi-Fi; riabbina; il Debug wireless si può spegnere al cambio rete |
-| Scatta guardando i bordi / non scatta altrove | regola *Margine schermo*; ricalibra; controlla la mappa |
-| "Webcam non disponibile" | chiudi le app che la usano; prova un altro *Indice webcam*; `--check-camera` |
-| YouTube non reagisce | avvia il video nel browser; *Filtro applicazione*; Test PLAY/PAUSA |
-| La finestra non c'è più | è nell'area di notifica (freccia ^): clic sull'icona. Rilanciare il programma la riapre |
-| Errori all'avvio | `start-debug.bat` (con console) e il file `eyegaze.log` |
+| Nothing happens (**DRY-RUN** badge visible) | turn off *Dry run* or start without `--dry-run` |
+| "Model missing" | reopen the app and accept the download, or `breakfromaeye --setup` |
+| Tablet "Disconnected" | same Wi-Fi network; pair again; Wireless debugging may switch off when the network changes |
+| Triggers while looking at the edges / does not trigger when away | adjust *Screen margin*; recalibrate; check the map |
+| "Webcam not available" | close other apps using it; try another *Webcam index*; `--check-camera` |
+| YouTube does not react | start the video in the browser; *Application filter*; Test PLAY/PAUSE |
+| The window is gone | it is in the notification area (^ arrow): click the icon. Launching the program again reopens it |
+| Start-up errors | `start-debug.bat` (with a console) and the `eyegaze.log` file |
 
-## Creare l'installer
+## Building the installer
 ```bash
 pip install -e ".[dev]" pyinstaller
-python -m eyegaze --setup          # scarica modello e adb (vengono inclusi nell'installer)
+python -m eyegaze --setup          # downloads the model and adb (they are bundled in the installer)
 python -m PyInstaller --noconfirm --clean packaging/breakfromaeye.spec
-ISCC.exe /DAppVersion=1.0.0 packaging\installer.iss   # Inno Setup 6 → dist\BreakFromAeye-Setup-1.0.0.exe
+ISCC.exe /DAppVersion=1.1.0 packaging\installer.iss   # Inno Setup 6 → dist\BreakFromAeye-Setup-1.1.0.exe
 ```
-Su GitHub lo fa il workflow `release`: pubblicando un tag (`git tag v1.0.0 && git push origin v1.0.0`) l'installer viene allegato alla Release.
-L'icona (`assets/`) è disegnata in codice: `python packaging/make_icon.py` la rigenera.
+On GitHub the `release` workflow does it: pushing a tag (`git tag v1.1.0 && git push origin v1.1.0`) attaches the installer to the Release.
+The icon (`assets/`) is drawn in code: `python packaging/make_icon.py` regenerates it.
 
-## Sviluppo
+## Development and translations
 ```bash
 pip install -e ".[dev]"
-python -m pytest -q          # test senza webcam né tablet (ADB e webcam simulati)
-python -m eyegaze --simulate # scenario finto in dry-run
+python -m pytest -q          # tests need no webcam or tablet (ADB and webcam are simulated)
+python -m eyegaze --simulate # scripted dry-run scenario
 ```
-Struttura: `eyegaze/` (codice: `statemachine`, `features`, `calibration`, `capture`, `adb`, `outputs`, `engine`, `gui`, …), `tests/`.
+Layout: `eyegaze/` (code: `statemachine`, `features`, `calibration`, `capture`, `adb`, `outputs`, `engine`, `gui`, …), `tests/`.
+UI texts are written in Italian in the code, wrapped in `tr("…")`; the English translations live in `eyegaze/locale_en.py`
+and a test checks that none is missing. Adding a language only needs another dictionary like it (see `eyegaze/i18n.py`).
+Code comments and docstrings are currently in Italian.
 
 ## Privacy
-Le immagini della webcam sono elaborate in locale e non vengono salvate né inviate. Gli unici accessi in rete sono i download facoltativi
-(modello MediaPipe da `storage.googleapis.com`, platform-tools da `dl.google.com`). La calibrazione (`calibration_*.json`) resta sul tuo PC ed è esclusa da git.
+Webcam images are processed locally and never saved or sent anywhere. The only network accesses are the optional downloads
+(MediaPipe model from `storage.googleapis.com`, platform-tools from `dl.google.com`). Your calibration (`calibration_*.json`) stays on your PC and is excluded from git.
 
-## Licenza e riconoscimenti
-[MIT](LICENSE). Usa [MediaPipe](https://github.com/google-ai-edge/mediapipe) (Apache-2.0, modello scaricato a parte), OpenCV, NumPy, pystray, Pillow e
-Android platform-tools (scaricati da Google, con la loro licenza).
+## License and credits
+[MIT](LICENSE). Uses [MediaPipe](https://github.com/google-ai-edge/mediapipe) (Apache-2.0, model downloaded separately), OpenCV, NumPy, pystray, Pillow, qrcode and
+the Android platform-tools (downloaded from Google, under their own license).

@@ -9,6 +9,7 @@ from typing import Callable
 from .calibration import calibration_grid
 from .engine import Engine
 from .monitors import Rect, calibration_rect
+from .i18n import tr
 
 
 class CalibrationWindow:
@@ -31,7 +32,7 @@ class CalibrationWindow:
         self.win.configure(bg="#0b0e14")
         self.cv = tk.Canvas(self.win, bg="#0b0e14", highlightthickness=0)
         self.cv.pack(fill="both", expand=True)
-        self.win.bind("<Escape>", lambda e: self.finish(False, "Calibrazione annullata."))
+        self.win.bind("<Escape>", lambda e: self.finish(False, tr("Calibrazione annullata.")))
         self.win.focus_force()
         engine.begin_calibration()
         self.tick()
@@ -47,11 +48,11 @@ class CalibrationWindow:
         cv.delete("all")
         w, h = self.rect.w, self.rect.h
         if self.phase == "intro":
-            cv.create_text(w / 2, h / 2 - 40, text="Calibrazione", fill="#e6edf3", font=("Segoe UI", 28, "bold"))
+            cv.create_text(w / 2, h / 2 - 40, text=tr("Calibrazione"), fill="#e6edf3", font=("Segoe UI", 28, "bold"))
             cv.create_text(w / 2, h / 2 + 20, fill="#9aa7b4", font=("Segoe UI", 15), justify="center",
-                           text="Siediti nella posizione abituale e tieni la testa naturale.\n"
+                           text=tr("Siediti nella posizione abituale e tieni la testa naturale.\n"
                                 "Segui il punto con lo SGUARDO: guardalo finché non si sposta.\n\n"
-                                "Esc per annullare")
+                                "Esc per annullare"))
             if now > 3.5:
                 self.next_point()
         else:
@@ -62,7 +63,7 @@ class CalibrationWindow:
             cv.create_oval(x - r - 12, y - r - 12, x + r + 12, y + r + 12, outline=color, width=2)
             cv.create_oval(x - 7, y - 7, x + 7, y + 7, fill=color, outline="")
             cv.create_text(w / 2, 40, fill="#9aa7b4", font=("Segoe UI", 13),
-                           text=f"Punto {self.idx + 1} di {len(self.points)}   ·   Esc per annullare")
+                           text=tr('Punto {v} di {n}   ·   Esc per annullare', v=self.idx + 1, n=len(self.points)))
             if self.phase == "settle" and now >= self.settle:
                 self.phase, self.t0 = "sample", time.monotonic()
                 self.engine.calib_collect(True)
@@ -89,9 +90,9 @@ class CalibrationWindow:
             self.finish(False, str(exc))
             return
         q = "buona" if model.rmse < 0.12 else "media" if model.rmse < 0.22 else "scarsa"
-        msg = f"Calibrazione completata (qualità {q}, errore {model.rmse:.2f})."
+        msg = tr('Calibrazione completata (qualità {q}, errore {rmse:.2f}).', q=q, rmse=model.rmse)
         if model.rmse >= 0.22:
-            msg += " Riprova stando più fermo e con buona luce frontale."
+            msg += tr(" Riprova stando più fermo e con buona luce frontale.")
         self.finish(True, msg, already_finished=True)
 
     def finish(self, ok: bool, msg: str, already_finished: bool = False):

@@ -88,6 +88,7 @@ DEFAULTS: dict[str, Any] = {
     "dry_run": False,
     "show_preview": False,
     "ui": {
+        "language": "auto",
         "close_action": "tray",
         "start_minimized": False,
     },
@@ -174,6 +175,10 @@ SETTINGS: list[dict[str, Any]] = [
     dict(path="outputs.pc_media.fallback_media_key", section="Video sul PC (YouTube…)", label="Tasto multimediale di riserva",
          help="Se non c'è una sessione multimediale, simula il tasto Play/Pausa (è un toggle: può invertire lo stato).", type="bool"),
     # --- Interfaccia
+    dict(path="ui.language", section="Interfaccia", label="Lingua",
+         help="Lingua dell'interfaccia. «Automatica» segue la lingua di Windows (italiano, altrimenti inglese).",
+         type="choice", choices=["auto", "it", "en"],
+         labels={"auto": "Automatica (lingua di Windows)", "it": "Italiano", "en": "English"}),
     dict(path="ui.close_action", section="Interfaccia", label="Cliccando Chiudi (X)",
          help="«Nascondi» lascia il programma attivo nell'area di notifica (freccia ^ vicino all'orologio); «Chiudi» lo termina.",
          type="choice", choices=["tray", "quit"],

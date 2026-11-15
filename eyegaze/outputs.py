@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from .adb import (AdbClient, AdbError, KEY_PAUSE, KEY_PLAY, KEY_PLAY_PAUSE, STATE_PAUSED, STATE_PLAYING)
+from .i18n import tr
 
 
 @dataclass
@@ -50,12 +51,12 @@ class DryRunOutput(Output):
     def send(self, action: str) -> CommandResult:
         desc = self.inner.describe(action) if hasattr(self.inner, "describe") else action.upper()
         self.planned.append(desc)
-        self._print(f"[dry-run] {self.label}: {desc}")
-        return CommandResult(time.time(), self.name, action, True, f"(dry-run) {desc}", dry_run=True)
+        self._print(tr('[dry-run] {label}: {desc}', label=self.label, desc=desc))
+        return CommandResult(time.time(), self.name, action, True, tr('(dry-run) {desc}', desc=desc), dry_run=True)
 
     def status(self) -> dict:
         s = dict(self.inner.status())
-        s["detail"] = (s.get("detail", "") + " · dry-run").strip(" ·")
+        s["detail"] = (s.get("detail", "") + tr(" · dry-run")).strip(" ·")
         return s
 
     def refresh(self) -> None:
@@ -73,13 +74,13 @@ class AdbOutput(Output):
         self.cfg = cfg                       # sotto-dizionario outputs.tablet
         self.client = client or AdbClient(cfg.get("adb_path", ""))
         self.serial = cfg.get("serial", "")
-        self._status = {"connected": False, "detail": "non verificato", "serial": self.serial, "model": ""}
+        self._status = {"connected": False, "detail": tr("non verificato"), "serial": self.serial, "model": ""}
         self._last_reconnect = -1e9
 
     def describe(self, action: str) -> str:
         code = KEY_PLAY if action == "play" else KEY_PAUSE
-        s = self.serial or "<seriale da scegliere>"
-        extra = " (via toggle_if_needed)" if self.cfg.get("method") == "toggle_if_needed" else ""
+        s = self.serial or tr("<seriale da scegliere>")
+        extra = tr(" (via toggle_if_needed)") if self.cfg.get("method") == "toggle_if_needed" else ""
         return f"adb -s {s} shell input keyevent {code}{extra}"
 
     # selezione esplicita del dispositivo: mai inventare un seriale
@@ -93,18 +94,18 @@ class AdbOutput(Output):
         if self.serial:
             match = next((d for d in devs if d.serial == self.serial), None)
             if match and match.ready:
-                self._status.update(connected=True, detail="connesso", serial=match.serial, model=match.model)
+                self._status.update(connected=True, detail=tr("connesso"), serial=match.serial, model=match.model)
                 return self.serial
             if match and not match.ready:
-                raise AdbError(f"dispositivo {match.serial} in stato «{match.state}»")
-            raise AdbError(f"dispositivo {self.serial} non trovato")
+                raise AdbError(tr('dispositivo {serial} in stato «{state}»', serial=match.serial, state=match.state))
+            raise AdbError(tr('dispositivo {serial} non trovato', serial=self.serial))
         if len(ready) == 1:                          # un solo dispositivo pronto: scelta non ambigua
             self.serial = ready[0].serial
-            self._status.update(connected=True, detail="connesso", serial=self.serial, model=ready[0].model)
+            self._status.update(connected=True, detail=tr("connesso"), serial=self.serial, model=ready[0].model)
             return self.serial
         if not ready:
-            raise AdbError("nessun dispositivo connesso")
-        raise AdbError("più dispositivi connessi: selezionane uno")
+            raise AdbError(tr("nessun dispositivo connesso"))
+        raise AdbError(tr("più dispositivi connessi: selezionane uno"))
 
     def refresh(self) -> None:
         try:
@@ -132,7 +133,7 @@ class AdbOutput(Output):
             try:
                 serial = self._resolve()
                 self._do(serial, action)
-                self._status.update(connected=True, detail="connesso")
+                self._status.update(connected=True, detail=tr("connesso"))
                 return CommandResult(time.time(), self.name, action, True, self.describe(action))
             except AdbError as exc:
                 last_err = str(exc)
@@ -140,7 +141,7 @@ class AdbOutput(Output):
                 if attempt < self.MAX_RETRIES:
                     self._try_reconnect()
                     time.sleep(0.4)
-        return CommandResult(time.time(), self.name, action, False, f"ADB: {last_err}")
+        return CommandResult(time.time(), self.name, action, False, tr('ADB: {last_err}', last_err=last_err))
 
     def _do(self, serial: str, action: str) -> None:
         if self.cfg.get("method") == "toggle_if_needed":
@@ -162,9 +163,9 @@ class AdbOutput(Output):
         st = self.client.playback_state(serial)
         want = STATE_PLAYING if action == "play" else STATE_PAUSED
         if st is None:
-            return "Comando inviato. Stato del player non leggibile: verifica a vista sul tablet."
-        return "Il player ha recepito il comando." if st == want else \
-            "Comando inviato ma il player NON è cambiato: l'app potrebbe ignorare i tasti (prova il metodo toggle_if_needed)."
+            return tr("Comando inviato. Stato del player non leggibile: verifica a vista sul tablet.")
+        return tr("Il player ha recepito il comando.") if st == want else \
+            tr("Comando inviato ma il player NON è cambiato: l'app potrebbe ignorare i tasti (prova il metodo toggle_if_needed).")
 
 
 # ------------------------------------------------------------------ PC
@@ -174,11 +175,11 @@ class PcMediaOutput(Output):
 
     def __init__(self, cfg: dict):
         self.cfg = cfg
-        self._status = {"connected": False, "detail": "non verificato"}
+        self._status = {"connected": False, "detail": tr("non verificato")}
         self._loop: Optional[asyncio.AbstractEventLoop] = None
 
     def describe(self, action: str) -> str:
-        flt = self.cfg.get("app_filter") or "sessione multimediale corrente"
+        flt = self.cfg.get("app_filter") or tr("sessione multimediale corrente")
         return f"Windows Media Session ({flt}): {action.upper()}"
 
     def _run(self, coro):
@@ -219,16 +220,16 @@ class PcMediaOutput(Output):
 
     def refresh(self) -> None:
         if sys.platform != "win32":
-            self._status.update(connected=False, detail="solo Windows")
+            self._status.update(connected=False, detail=tr("solo Windows"))
             return
         try:
             s = self._run(self._session())
             if s is None:
-                self._status.update(connected=False, detail="nessun video/audio attivo nel browser")
+                self._status.update(connected=False, detail=tr("nessun video/audio attivo nel browser"))
             else:
-                self._status.update(connected=True, detail=f"sessione: {s.source_app_user_model_id}")
+                self._status.update(connected=True, detail=tr('sessione: {source_app_user_model_id}', source_app_user_model_id=s.source_app_user_model_id))
         except Exception as exc:          # winrt mancante o errore WinRT
-            self._status.update(connected=False, detail=f"controlli multimediali non disponibili ({type(exc).__name__})")
+            self._status.update(connected=False, detail=tr('controlli multimediali non disponibili ({name__})', name__=type(exc).__name__))
 
     def status(self) -> dict:
         return dict(self._status)
@@ -244,12 +245,12 @@ class PcMediaOutput(Output):
         if res in ("ok", "already"):
             self._status.update(connected=True)
             return CommandResult(time.time(), self.name, action, True,
-                                 self.describe(action) + (" (già nello stato)" if res == "already" else ""))
+                                 self.describe(action) + (tr(" (già nello stato)") if res == "already" else ""))
         if res in ("nosession", "refused", "error") and self.cfg.get("fallback_media_key") and sys.platform == "win32":
             self._media_key()
-            return CommandResult(time.time(), self.name, action, True, "tasto multimediale Play/Pausa (toggle di riserva)")
-        why = {"nosession": "nessuna sessione multimediale (avvia il video nel browser)",
-               "refused": "il player ha rifiutato il comando"}.get(res, err)
+            return CommandResult(time.time(), self.name, action, True, tr("tasto multimediale Play/Pausa (toggle di riserva)"))
+        why = {"nosession": tr("nessuna sessione multimediale (avvia il video nel browser)"),
+               "refused": tr("il player ha rifiutato il comando")}.get(res, err)
         self._status.update(connected=False, detail=why)
         return CommandResult(time.time(), self.name, action, False, why)
 

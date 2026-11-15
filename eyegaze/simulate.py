@@ -10,6 +10,7 @@ from .calibration import calibration_grid, fit_model
 from .capture import FrameResult
 from .engine import Engine, build_outputs
 from .features import FaceFeatures
+from .i18n import tr
 
 FPS = 15
 SCREEN_CENTER = (0.5, 0.5)
@@ -55,7 +56,7 @@ def run(name: str = "demo", cfg: dict | None = None) -> list[str]:
                  model=synthetic_model(), clock=lambda: clock["t"], printer=lines.append)
     eng._setup()
     for desc, res, secs in SCENARIOS[name]:
-        lines.append(f"--- t={clock['t']:5.1f}s  {desc}")
+        lines.append(f"--- t={clock['t']:5.1f}s  {tr(desc)}")
         for _ in range(round(secs * FPS)):
             eng.step(res, clock["t"])
             clock["t"] += 1 / FPS

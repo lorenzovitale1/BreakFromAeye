@@ -1,9 +1,9 @@
 @echo off
 cd /d "%~dp0"
 if not exist ".venv\Scripts\pythonw.exe" (
-  echo Ambiente non trovato: esegui prima setup.bat
+  echo Environment not found: run setup.bat first. / Ambiente non trovato: esegui prima setup.bat
   pause
   exit /b 1
 )
-rem Avvio senza finestra di comando; se resta nascosto cerca l icona nell area di notifica (freccia ^ vicino all orologio)
+rem Starts without a console window; if hidden, look for the icon in the notification area (^ near the clock) / cerca l icona nell area di notifica
 start "" ".venv\Scripts\pythonw.exe" -m eyegaze %*

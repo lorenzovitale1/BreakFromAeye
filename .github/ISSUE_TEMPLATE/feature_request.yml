@@ -1,0 +1,15 @@
+name: Feature request / Richiesta di funzione
+description: Suggest an idea / Proponi un'idea
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What would you like the program to do? / Cosa vorresti che facesse il programma?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful? / A cosa serve?

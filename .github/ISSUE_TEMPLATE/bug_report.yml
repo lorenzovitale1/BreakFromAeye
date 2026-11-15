@@ -1,0 +1,37 @@
+name: Bug report / Segnalazione di un problema
+description: Something does not work as expected / Qualcosa non funziona come previsto
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! Write in English or Italian. / Grazie! Puoi scrivere in italiano o in inglese.
+        Please **do not attach webcam images or your calibration file** / **non allegare immagini della webcam né il file di calibrazione**.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Cosa è successo?
+      description: What did you expect and what happened instead? / Cosa ti aspettavi e cosa è successo?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Come riprodurlo
+  - type: input
+    id: version
+    attributes:
+      label: Version / Versione
+      description: Shown by `breakfromaeye --version` / mostrata da `breakfromaeye --version`
+      placeholder: "1.1.0"
+  - type: dropdown
+    id: output
+    attributes:
+      label: Which output? / Quale uscita?
+      options: [Android tablet (ADB), Video on the PC / Video sul PC, Both / Entrambi, Not related / Non c'entra]
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (eyegaze.log) / Registro
+      description: Content of the Log tab or of `eyegaze.log` / Contenuto della scheda Registro o di `eyegaze.log`
+      render: text
